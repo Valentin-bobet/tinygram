@@ -38,8 +38,8 @@ import com.google.appengine.api.datastore.Transaction;
 
 @Api(name = "myApi",
      version = "v1",
-     audiences = "927375242383-t21v9ml38tkh2pr30m4hqiflkl3jfohl.apps.googleusercontent.com",
-  	 clientIds = "927375242383-t21v9ml38tkh2pr30m4hqiflkl3jfohl.apps.googleusercontent.com",
+     audiences = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
+  	 clientIds = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
 		   ownerDomain = "helloworld.example.com",
@@ -219,5 +219,23 @@ public class ScoreEndpoint {
 //		datastore.put(pi);
 		txn.commit();
 		return e;
+	}
+	
+	@ApiMethod(name= "createUser", httpMethod = HttpMethod.POST)
+	public Entity tinyUser(User u) throws UnauthorizedException {
+		
+		if (u == null) {
+			throw new UnauthorizedException("Invalid credentials");
+		}
+		
+		Entity e = new Entity("tinyUser");
+		e.setProperty("Email", u.getEmail());
+		
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Transaction txn = datastore.beginTransaction();
+		datastore.put(e);
+		txn.commit();
+		return e;
+		
 	}
 }

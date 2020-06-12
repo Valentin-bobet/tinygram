@@ -221,15 +221,15 @@ public class ScoreEndpoint {
 		return e;
 	}
 	
-	@ApiMethod(name= "createUser", httpMethod = HttpMethod.POST)
-	public Entity tinyUser(User u) throws UnauthorizedException {
+	@ApiMethod(name= "tinyUser", httpMethod = HttpMethod.POST)
+	public Entity tinyUser(User user) throws UnauthorizedException {
 		
-		if (u == null) {
+		if (user == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
 		
 		Entity e = new Entity("tinyUser");
-		e.setProperty("Email", u.getEmail());
+		e.setProperty("Email", user.getEmail());
 		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Transaction txn = datastore.beginTransaction();
@@ -238,4 +238,5 @@ public class ScoreEndpoint {
 		return e;
 		
 	}
+	
 }

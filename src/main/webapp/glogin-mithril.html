@@ -28,6 +28,7 @@ var Profile={
   email:"",
   ID:"",
   url:"",
+  content:"",
   nextToken:"",
   list:[],
   view: function(){
@@ -36,6 +37,31 @@ var Profile={
 	  m("h2", {class: 'subtitle'}, "email:"+Profile.email),
 	  m("img",{"src":Profile.url}),
 	  m("button",{class:"button", onclick: function(e) { Profile.loadList()}},"Msgs"),
+	  m("form", {
+	      onsubmit: function(e) {
+	        e.preventDefault()
+			if (url="") {url="https://dummyimage.com/320x200/000/fff&text="+Date.now()} 
+			if (body="") {body="bla bla bla \n"+Date.now()}
+	        Profile.postMessage()
+	      }}, 
+	      [
+	    	m('div', {class:'field'},[
+	         m("label", {class:'label'},"URL"),
+	         m('div',{class:'control'}, m("input[type=text]", {
+	          class:'input is-rounded',
+	          placeholder:"Your url",
+	             oninput: function(e) {Profile.url = e.target.value}})),
+//	         m("img",{"src":this.url}),
+	        ]),
+	      m('div',{class:'field'},[
+	    	  m("label", {class: 'label'},"Body"),
+	          m('div',{class:'control'},m("input[type=textarea]", {
+	        class:'textarea',
+	        placeholder:"your text",
+	        oninput: function(e) { Profile.content = e.target.value }})),
+	        ]),
+	      m('div',{class:'control'},m("button[type=submit]", {class:'button is-link'},"Poster")),
+   	 ]),
 	  m("button",{class:"button", onclick: function(e) { Profile.postMessage()}},"Post Dummy"),
 	  m("div",m(PostView,{profile: Profile}))
 	])
@@ -74,7 +100,7 @@ var Profile={
   },
    postMessage: function() {
 		var data={'url': "https://dummyimage.com/320x200/000/fff&text="+Date.now(),
-				'body': "paglop "+Date.now()}
+				'body': Profile.content}
     	console.log("post:"+data)
 		return m.request({
     		method: "POST",
@@ -85,6 +111,16 @@ var Profile={
 	 			console.log("post_message:",result)
 	 			Profile.loadList()
     	 	})
+	},
+	tinyUser: function() {
+	    // nextToken: "",
+	    var data = {'email': Profile.email};
+	    
+	    return m.request ({
+	 		method: "POST",
+	 		url: "_ah/api/myApi/v1/tinyUser"+'?access_token='+encodeURIComponent(Profile.ID),
+	 		params: data,
+		})
 	}
 }
 
@@ -132,21 +168,9 @@ function onSignIn(googleUser) {
   Profile.ID=googleUser.getAuthResponse().id_token;
   Profile.url=profile.getImageUrl();
   
-  CreateUserAction.createUser();
+  Profile.tinyUser();
   
   m.route.set("/secret")
-}
-
-var CreateUserAction = {
-	    nextToken: "",
-	    createUser: function() {
-		    return m.request({
-		 		method: "POST",
-		 		url: "_ah/api/myApi/v1/createUser",
-		 	}).then(function() {
-	 			console.log("return effectué:")
-    	 	})
-     	}
 }
 		
 var Login = {

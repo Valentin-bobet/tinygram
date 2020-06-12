@@ -38,8 +38,8 @@ import com.google.appengine.api.datastore.Transaction;
 
 @Api(name = "myApi",
      version = "v1",
-     audiences = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
-  	 clientIds = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
+     audiences = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
+  	 clientIds = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
 		   ownerDomain = "helloworld.example.com",
@@ -129,27 +129,27 @@ public class ScoreEndpoint {
 	    //q.addProjection(new PropertyProjection("url", String.class));
 
 	    // looks like a good idea but...
-	    // generate a DataStoreNeedIndexException -> 
+	    // generate a DataStoreNeedIndexException ->
 	    // require compositeIndex on owner + date
 	    // Explosion combinatoire.
 	    // q.addSort("date", SortDirection.DESCENDING);
-	    
+
 	    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 	    PreparedQuery pq = datastore.prepare(q);
-	    
+
 	    FetchOptions fetchOptions = FetchOptions.Builder.withLimit(2);
-	    
+
 	    if (cursorString != null) {
 		fetchOptions.startCursor(Cursor.fromWebSafeString(cursorString));
 		}
-	    
+
 	    QueryResultList<Entity> results = pq.asQueryResultList(fetchOptions);
 	    cursorString = results.getCursor().toWebSafeString();
-	    
+
 	    return CollectionResponse.<Entity>builder().setItems(results).setNextPageToken(cursorString).build();
-	    
+
 	}
-    
+
 	@ApiMethod(name = "getPost",
 		   httpMethod = ApiMethod.HttpMethod.GET)
 	public CollectionResponse<Entity> getPost(User user, @Nullable @Named("next") String cursorString)
@@ -212,7 +212,7 @@ public class ScoreEndpoint {
 //		Entity pi = new Entity("PostIndex", e.getKey());
 //		HashSet<String> rec=new HashSet<String>();
 //		pi.setProperty("receivers",rec);
-		
+
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Transaction txn = datastore.beginTransaction();
 		datastore.put(e);
@@ -220,23 +220,33 @@ public class ScoreEndpoint {
 		txn.commit();
 		return e;
 	}
-	
+
 	@ApiMethod(name= "tinyUser", httpMethod = HttpMethod.POST)
 	public Entity tinyUser(User user) throws UnauthorizedException {
-		
+
 		if (user == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
-		
-		Entity e = new Entity("tinyUser");
-		e.setProperty("Email", user.getEmail());
-		
+
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Transaction txn = datastore.beginTransaction();
-		datastore.put(e);
-		txn.commit();
-		return e;
-		
+
+	    Query searchQuery = new Query("tinyUser").setFilter(
+	    		new FilterPredicate("email", FilterOperator.EQUAL, user.getEmail()));
+
+	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
+
+		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
+
+		if(searchQueryResult.isEmpty()) {
+			Entity e = new Entity("tinyUser");
+			e.setProperty("email", user.getEmail());
+
+			DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
+			Transaction txn = datastore_2.beginTransaction();
+			datastore_2.put(e);
+			txn.commit();
+			return e;
+		}
+		return null;
 	}
-	
 }

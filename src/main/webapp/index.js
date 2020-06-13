@@ -169,24 +169,32 @@ var Profile = {
         return m('div',[
             m(Navbar),
             m('div', {class:'container'},[
-                m("h1", {
-                    class: 'title'
-                }, Profile.name),
-                m("h2", {
-                    class: 'subtitle'
-                }, Profile.email),
-                m("img", {
-                    class:"profile_image",
-                    "src":Profile.url
-                }),
-                m("button", {
-                    class:"button",
-                    onclick: function () {
-                        Profile.loadList();
-                    },
-                },"Msgs"),
+                m('div', {class:"row"},[
+                    m('div', {class:"col-md-2 col-sm-2 col-xs-2"},
+                        m("img", {
+                            class:"profile_image",
+                            "src":Profile.url
+                        })
+                    ),
+                    m('div', {class:"col-md-8 col-sm-8 col-xs-8"},
+                        m("h1", {
+                            class: 'title'
+                        }, Profile.name),
+                        m("h2", {
+                            class: 'subtitle'
+                        }, Profile.email)
+                    ),
+                    m('div', {class:"col-md-2 col-sm-2 col-xs-2"},
+                        m("button", {
+                            class:"btn btn-info float-right",
+                            onclick: function () {
+                                Profile.loadList();
+                            },
+                        },"Load Messages")
+                    )]
+                ),
                 m("p",{class: 'my-5'}, [
-                    m("button.btn[aria-controls='collapseNewPost'][aria-expanded='false'][data-target='#collapseNewPost'][data-toggle='collapse'][type='button']", "Make a new Post"),
+                    m("button.btn.btn-success[aria-controls='collapseNewPost'][aria-expanded='false'][data-target='#collapseNewPost'][data-toggle='collapse'][type='button']", "Make a new Post"),
                 ]),
                 m(".collapse[id='collapseNewPost'].mb-5", [
                     m("form", {
@@ -230,7 +238,7 @@ var Profile = {
                             ),
                         ]
                     ),
-                    m("br"),
+                    m("br.mt-3"),
                     m("button.mt-3", {
                         class:"btn btn-info float-right",
                         onclick: function () {

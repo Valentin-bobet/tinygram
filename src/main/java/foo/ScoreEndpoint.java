@@ -39,12 +39,12 @@ import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream
 
 @Api(name = "myApi",
      version = "v1",
-     audiences = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
-  	 clientIds = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
+     audiences = "235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com",
+  	 clientIds = "235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
-		   ownerDomain = "helloworld.example.com",
-		   ownerName = "helloworld.example.com",
+		   ownerDomain = "essai-tinygram.appspot.com",
+		   ownerName = "essai-tinygram.appspot.com",
 		   packagePath = "")
      )
 

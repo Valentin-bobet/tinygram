@@ -33,6 +33,7 @@ public class SearchUserQuery extends HttpServlet {
 	@Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String search = request.getParameter("search");
+        String me = request.getParameter("me");
 
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
@@ -44,7 +45,7 @@ public class SearchUserQuery extends HttpServlet {
 
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         Query searchQuery = new Query("tinyUser").setFilter(
-        		new FilterPredicate("Email", FilterOperator.EQUAL, search));
+        		new FilterPredicate("email", FilterOperator.EQUAL, search));
         PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
 		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
 		if(searchQueryResult.isEmpty()) {
@@ -53,7 +54,24 @@ public class SearchUserQuery extends HttpServlet {
 			out.print("<li> Result:" + searchQueryResult.size() + "<br>");
 
 			for (Entity entity : searchQueryResult) {
-				out.print("<li>" + entity.getProperty("Email"));
+				out.print("<li>" + entity.getProperty("email"));
+				
+				DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
+		        Query friendQuery = new Query("Friendship").setFilter(CompositeFilterOperator.and(
+		        		new FilterPredicate("askingUser", FilterOperator.EQUAL, me),
+		        		new FilterPredicate("targetUser", FilterOperator.EQUAL, search)
+		        		));
+		        PreparedQuery preparedFriendQuery = datastore_2.prepare(friendQuery);
+				List<Entity> friendQueryResult = preparedFriendQuery.asList(FetchOptions.Builder.withDefaults());
+				
+				if (friendQueryResult.isEmpty()) {
+					
+					out.print("Pas ami");
+					
+				} else {
+					out.print("Ami");
+				}
+				
 			}
 		}
     }

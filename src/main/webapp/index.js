@@ -24,7 +24,7 @@ var googleUser = {}; // The current user
 
 gapi.load('auth2', function(){
     auth2 = gapi.auth2.init({
-        client_id: '870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com'
+        client_id: '235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com'
     });
     auth2.attachClickHandler('signin-button', {}, onSuccess, onFailure);
 
@@ -121,6 +121,7 @@ var searchBar = {
             return (
                 m("form.form-inline.my-2.my-lg-0[action='/search'][method='post']", [
                     m("input.form-control.mr-sm-2[aria-label='Search'][id='search'][name='search'][placeholder='Search users'][type='search']"),
+                    m("input[id='me'][name='me'][type='hidden'][value=" + Profile.email + "]"),
                     m("button.btn.btn-outline-success.my-2.my-sm-0[type='submit']", "Search")
                 ])
             );

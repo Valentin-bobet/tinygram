@@ -42,7 +42,8 @@
 
     <checkstyle.skip>true</checkstyle.skip>
     
-    <endpoints.project.id>simple-basique-basique-simple</endpoints.project.id>
+    <endpoints.project.id>essai-tinygram</endpoints.project.id>
+    <google-signin-client_id>235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com</google-signin-client_id>
   </properties>
 
   <dependencies>

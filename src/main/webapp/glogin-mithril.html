@@ -121,7 +121,26 @@ var Profile={
 	 		url: "_ah/api/myApi/v1/tinyUser"+'?access_token='+encodeURIComponent(Profile.ID),
 	 		params: data,
 		})
+	},
+	likeIt: function(postLiked) {
+	    var data = {'postLiked': postLiked,
+	    			'mail': Profile.email};
+	    
+	    return m.request ({
+	 		method: "POST",
+	 		url: "_ah/api/myApi/v1/likeIt"+'?access_token='+encodeURIComponent(Profile.ID),
+	 		params: data,
+		})
 	}
+/* 	countLike: function(postId) {
+	    var data = {'postLiked': postId,
+    				'mail': Profile.email};
+    
+    return m.request ({
+ 		method: "POST",
+ 		url: "_ah/api/myApi/v1/countLike"+'?access_token='+encodeURIComponent(Profile.ID),
+ 		params: data,
+	})  */
 }
 
 var PostView = {
@@ -139,14 +158,15 @@ var PostView = {
 			    vnode.attrs.profile.list.map(function(item) {
 			      return m("tr", [
 		            m("td", m("button", {onclick: function(e) {
-						console.log("like:"+item.key.id)
+						Profile.likeIt(item.key.name);
+		            	console.log("like:"+item.key.name)
 		                 }},"like")),
 		                 m("td", m("button", {onclick: function(e) {
 		     				console.log("del:"+item.key.id)
 		                 }},"del")),
 			        m('td', m('label', item.properties.body)),
 			        m('td', m('img', {class: 'is-rounded', 'src': item.properties.url})),
-			        m('td', m('label', item.properties.likec)),
+			        m('td', m('label', '0')),
 			      ])
 			    }),
 //			    m("div", isError ? "An error occurred" : "Saved"),

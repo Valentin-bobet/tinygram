@@ -35,6 +35,7 @@ import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.datastore.QueryResultList;
 import com.google.appengine.api.datastore.Transaction;
+import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream;
 
 @Api(name = "myApi",
      version = "v1",
@@ -228,15 +229,95 @@ public class ScoreEndpoint {
 			throw new UnauthorizedException("Invalid credentials");
 		}
 		
-		Entity e = new Entity("tinyUser");
-		e.setProperty("Email", user.getEmail());
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		
+	    Query searchQuery = new Query("tinyUser").setFilter(
+	    		new FilterPredicate("email", FilterOperator.EQUAL, user.getEmail()));
+	    
+	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
+	    
+		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
+		
+		if(searchQueryResult.isEmpty()) {
+			Entity e = new Entity("tinyUser");
+			e.setProperty("email", user.getEmail());
+			
+			DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
+			Transaction txn = datastore_2.beginTransaction();
+			datastore_2.put(e);
+			txn.commit();
+			return e;
+		}
+		return null;
+	}
+	
+	@ApiMethod(name= "likeIt", httpMethod = HttpMethod.POST)
+	public Entity likeIt(User u, Like like) throws UnauthorizedException {
+		
+		if (u.getEmail() == null) {
+			throw new UnauthorizedException("Invalid credentials");
+		}
 		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Transaction txn = datastore.beginTransaction();
-		datastore.put(e);
-		txn.commit();
-		return e;
+		
+	    Query searchQuery = new Query("like").setFilter(CompositeFilterOperator.and(
+	    		new FilterPredicate("Email", FilterOperator.EQUAL, u.getEmail()),
+	    		new FilterPredicate("Post", FilterOperator.EQUAL, like.getPostLiked())));
+	    
+	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
+	    
+		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
+		
+		if(searchQueryResult.isEmpty()) {
+			Entity e = new Entity("like");
+			e.setProperty("Email", u.getEmail());
+			e.setProperty("Post", like.getPostLiked());
+			
+			DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
+			Transaction txn = datastore_2.beginTransaction();
+			datastore_2.put(e);
+			txn.commit();
+			return e;
+		}
+		return null;
 		
 	}
+	
+//	@ApiMethod(name = "countLike", httpMethod = ApiMethod.HttpMethod.GET)
+//		public int countLike(User user, Like like)
+//				throws UnauthorizedException {
+//
+//			if (user == null) {
+//				throw new UnauthorizedException("Invalid credentials");
+//			}
+//
+//			Query q = new Query("like").setFilter(CompositeFilterOperator.and(
+//		    		new FilterPredicate("Email", FilterOperator.EQUAL, user.getEmail()),
+//		    		new FilterPredicate("Post", FilterOperator.EQUAL, like.getPostLiked())));
+//
+//			// Multiple projection require a composite index
+//			// owner is automatically projected...
+//			// q.addProjection(new PropertyProjection("body", String.class));
+//			// q.addProjection(new PropertyProjection("date", java.util.Date.class));
+//			// q.addProjection(new PropertyProjection("likec", Integer.class));
+//			// q.addProjection(new PropertyProjection("url", String.class));
+//
+//			// looks like a good idea but...
+//			// require a composite index
+//			// - kind: Post
+//			//  properties:
+//			//  - name: owner
+//			//  - name: date
+//			//    direction: desc
+//
+//			// q.addSort("date", SortDirection.DESCENDING);
+//
+//			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+//			PreparedQuery pq = datastore.prepare(q);
+//
+//			int results = pq.countEntities();
+//
+//			return results;
+//		}
 	
 }

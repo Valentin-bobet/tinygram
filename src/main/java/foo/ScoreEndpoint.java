@@ -39,8 +39,8 @@ import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream
 
 @Api(name = "myApi",
      version = "v1",
-     audiences = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
-  	 clientIds = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
+     audiences = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
+  	 clientIds = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
 		   ownerDomain = "helloworld.example.com",
@@ -130,27 +130,27 @@ public class ScoreEndpoint {
 	    //q.addProjection(new PropertyProjection("url", String.class));
 
 	    // looks like a good idea but...
-	    // generate a DataStoreNeedIndexException -> 
+	    // generate a DataStoreNeedIndexException ->
 	    // require compositeIndex on owner + date
 	    // Explosion combinatoire.
 	    // q.addSort("date", SortDirection.DESCENDING);
-	    
+
 	    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 	    PreparedQuery pq = datastore.prepare(q);
-	    
+
 	    FetchOptions fetchOptions = FetchOptions.Builder.withLimit(2);
-	    
+
 	    if (cursorString != null) {
 		fetchOptions.startCursor(Cursor.fromWebSafeString(cursorString));
 		}
-	    
+
 	    QueryResultList<Entity> results = pq.asQueryResultList(fetchOptions);
 	    cursorString = results.getCursor().toWebSafeString();
-	    
+
 	    return CollectionResponse.<Entity>builder().setItems(results).setNextPageToken(cursorString).build();
-	    
+
 	}
-    
+
 	@ApiMethod(name = "getPost",
 		   httpMethod = ApiMethod.HttpMethod.GET)
 	public CollectionResponse<Entity> getPost(User user, @Nullable @Named("next") String cursorString)
@@ -213,7 +213,7 @@ public class ScoreEndpoint {
 //		Entity pi = new Entity("PostIndex", e.getKey());
 //		HashSet<String> rec=new HashSet<String>();
 //		pi.setProperty("receivers",rec);
-		
+
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Transaction txn = datastore.beginTransaction();
 		datastore.put(e);
@@ -221,10 +221,10 @@ public class ScoreEndpoint {
 		txn.commit();
 		return e;
 	}
-	
+
 	@ApiMethod(name= "tinyUser", httpMethod = HttpMethod.POST)
 	public Entity tinyUser(User user) throws UnauthorizedException {
-		
+
 		if (user == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
@@ -280,44 +280,5 @@ public class ScoreEndpoint {
 			return e;
 		}
 		return null;
-		
 	}
-	
-//	@ApiMethod(name = "countLike", httpMethod = ApiMethod.HttpMethod.GET)
-//		public int countLike(User user, Like like)
-//				throws UnauthorizedException {
-//
-//			if (user == null) {
-//				throw new UnauthorizedException("Invalid credentials");
-//			}
-//
-//			Query q = new Query("like").setFilter(CompositeFilterOperator.and(
-//		    		new FilterPredicate("Email", FilterOperator.EQUAL, user.getEmail()),
-//		    		new FilterPredicate("Post", FilterOperator.EQUAL, like.getPostLiked())));
-//
-//			// Multiple projection require a composite index
-//			// owner is automatically projected...
-//			// q.addProjection(new PropertyProjection("body", String.class));
-//			// q.addProjection(new PropertyProjection("date", java.util.Date.class));
-//			// q.addProjection(new PropertyProjection("likec", Integer.class));
-//			// q.addProjection(new PropertyProjection("url", String.class));
-//
-//			// looks like a good idea but...
-//			// require a composite index
-//			// - kind: Post
-//			//  properties:
-//			//  - name: owner
-//			//  - name: date
-//			//    direction: desc
-//
-//			// q.addSort("date", SortDirection.DESCENDING);
-//
-//			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-//			PreparedQuery pq = datastore.prepare(q);
-//
-//			int results = pq.countEntities();
-//
-//			return results;
-//		}
-	
 }

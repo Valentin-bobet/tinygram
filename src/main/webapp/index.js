@@ -24,7 +24,7 @@ var googleUser = {}; // The current user
 
 gapi.load('auth2', function(){
     auth2 = gapi.auth2.init({
-        client_id: '834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com'
+        client_id: '870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com'
     });
     auth2.attachClickHandler('signin-button', {}, onSuccess, onFailure);
 
@@ -305,7 +305,17 @@ var Profile = {
             url: "_ah/api/myApi/v1/tinyUser"+'?access_token='+encodeURIComponent(Profile.id),
             params: data,
         })
-    }
+    },
+	likeIt: function(postLiked) {
+	    var data = {'postLiked': postLiked,
+	    			'mail': Profile.email};
+	    
+	    return m.request ({
+	 		method: "POST",
+	 		url: "_ah/api/myApi/v1/likeIt"+'?access_token='+encodeURIComponent(Profile.id),
+	 		params: data,
+		})
+	}
 }
 
 var PostView = {
@@ -358,6 +368,7 @@ var PostView = {
                             m("button", {
                                 "class":"btn btn-success",
                                 onclick: function () {
+                                	Profile.likeIt(item.key.name);
                                     console.log("like:"+item.key.id)
                                 },
                         },

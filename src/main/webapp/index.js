@@ -1,4 +1,3 @@
-
 m.route(document.body, "/", {
     "/" : {
         onmatch: function() {
@@ -7,7 +6,7 @@ m.route(document.body, "/", {
     },
     "/profile": {
         onmatch: function() {
-            if (!auth2.isSignedIn.get() || sessionStorage.getItem("Profile") === null) m.route.set("/login");
+            if (!auth2.isSignedIn.get()) m.route.set("/login");
             else return Profile;
         }
     },
@@ -20,11 +19,11 @@ m.route(document.body, "/", {
 
 var isLoggedIn = false;
 var auth2;
-var googleUser = {}; // The current user
+var googleUser; // The current user
 
-gapi.load('auth2', function(){
+gapi.load('auth2', function() {
     auth2 = gapi.auth2.init({
-        client_id: '235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com'
+        client_id: "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com"
     });
     auth2.attachClickHandler('signin-button', {}, onSuccess, onFailure);
 
@@ -32,9 +31,25 @@ gapi.load('auth2', function(){
     auth2.currentUser.listen(userChanged); // This is what you use to listen for user changes
 });
 
-var signinChanged = function (val) {
-    isLoggedIn = val;
-    console.log('Signin state changed to ', val);
+var signinChanged = function (loggedIn) {
+
+    if (auth2.isSignedIn.get()) {
+        googleUser = auth2.currentUser.get();
+        isLoggedIn = loggedIn;
+        console.log('Signin state changed to ', loggedIn);
+        if(loggedIn) {
+            Profile.name = googleUser.getBasicProfile().getName();
+            Profile.email = googleUser.getBasicProfile().getEmail();
+            Profile.id = googleUser.getAuthResponse().id_token;
+            Profile.url = googleUser.getBasicProfile().getImageUrl();
+
+        } else {
+            Profile.name = "";
+            Profile.email = "";
+            Profile.id = "";
+            Profile.url = "";
+        }
+    }
 };
 
 var onSuccess = function(user) {
@@ -47,7 +62,6 @@ var onSuccess = function(user) {
     Profile.url = profile.getImageUrl();
 
     console.log(Profile);
-    sessionStorage.setItem("Profile",Profile);
     isLoggedIn=true;
 
     Profile.tinyUser();
@@ -61,6 +75,7 @@ var onFailure = function(error) {
 function signOut() {
     auth2.signOut().then(function () {
         console.log('User signed out.');
+        window.location.reload();
     });
 }
 
@@ -70,61 +85,56 @@ var userChanged = function (user) {
     }
 };
 
-function onSignIn(googleUser) {
-  }
-
-
-/*var signInButton = {
+var signInButton = {
     view: function () {
         return m("div", {
-            "class":"g-signin2",
-            "id":"signin-button",
-            "data-onsuccess": "console.log("});
+                "class":"g-signin2",
+                "id":"signin-button"
+            }
+        );
     }
 }
 
-var signOutButton = {
-    view: function () {
-        return m("button",{class:"btn", id:"signin-button", onclick: function(e) { signOut() }},"Sign out");
-    }
 
-}*/
-
-var signInButton = {
+var profilPicAndSignOut = {
     view: function () {
-        if(isLoggedIn || sessionStorage.getItem("Profile") != null) {
-            return m("div", [
-                    m("img", {
+        if(Profile.id!="") {
+            return m("div.form-inline.my-2.my-lg-0", [
+                m("span[aria-controls='collapseSignOut'][aria-expanded='false'][data-target='#collapseSignOut'][data-toggle='collapse']",
+                    m("img.mr-sm-2", {
                         class:"profile_image",
+                        "style":"height:42px",
                         "src":Profile.url,
                         "alt":Profile.name,
                     }),
-                    m("div", {
-                        "class":"g-signin2",
-                        "style":"display:none",
-                        "id":"signin-button",
-                        "data-onsuccess": console.log("Glogin ready")
-                    })
+                ),
+                m(".collapse[id='collapseSignOut'].my-2.my-sm-", [
+                    m("button.btn.btn-info", {
+                        onclick: function () {
+                            signOut();
+                        }
+                    }, "Sign Out")
+                ]),
                 ]);
         } else {
-            return m("div", {
-                "class":"g-signin2",
-                "id":"signin-button",
-                "data-onsuccess": console.log("Glogin ready")});
+            return m("div");
         }
     }
 }
 
 var searchBar = {
     view: function () {
-        if(isLoggedIn  || sessionStorage.getItem("Profile") != null) {
-            return (
-                m("form.form-inline.my-2.my-lg-0[action='/search'][method='post']", [
-                    m("input.form-control.mr-sm-2[aria-label='Search'][id='search'][name='search'][placeholder='Search users'][type='search']"),
-                    m("input[id='me'][name='me'][type='hidden'][value=" + Profile.email + "]"),
-                    m("button.btn.btn-outline-success.my-2.my-sm-0[type='submit']", "Search")
-                ])
-            );
+        if(Profile.id!="") {
+            return m("div.form-inline", [
+                m("div",
+                    m("form.form-inline.my-2.my-lg-0[action='/search'][method='post']", [
+                        m("input.form-control.mr-sm-2[aria-label='Search'][id='search'][name='search'][placeholder='Search users'][type='search']"),
+                        m("input[id='me'][name='me'][type='hidden'][value=" + Profile.email + "]"),
+                        m("button.btn.btn-outline-success.my-2.my-sm-0.mr-2[type='submit']", "Search"),
+                    ]),
+                ),
+                m(profilPicAndSignOut)
+            ]);
         } else {
             return (
                 m("form.form-inline.my-2.my-lg-0[action='/search'][method='post']", [
@@ -138,18 +148,22 @@ var searchBar = {
 
 var Navbar = {
     view: function () {
-        return (m("nav.navbar.navbar-expand-lg.navbar-light", [
+        return (m("nav.navbar.navbar-expand-lg.navbar-light.mb-5", [
             m(".collapse.navbar-collapse[id='navbarSupportedContent']", [
                 m("ul.navbar-nav.mr-auto", [
                     m("li.nav-item mr-5", [
                         m(signInButton),
                     ]),
-                    m("li.nav-item", [
-                        m("a.nav-link[href='#']", ["Home ",m("span.sr-only", "(current)")])
-                    ]),
-                    m("li.nav-item", [
-                        m(m.route.Link, {href: "/profile", oncreate: m.route.link, onupdate: m.route.link, class:"nav-link"}, "My Profile")
-                    ])
+                    m("li.nav-item",
+                        m("h2",
+                            m("a.nav-link[href='#']", ["Home ",m("span.sr-only", "(current)")])
+                        )
+                    ),
+                    m("li.nav-item",
+                        m("h2",
+                            m(m.route.Link, {href: "/profile", oncreate: m.route.link, onupdate: m.route.link, class:"nav-link"}, "My Profile")
+                        )
+                    )
                 ]),
                 m(searchBar)
             ])
@@ -310,7 +324,7 @@ var Profile = {
 	likeIt: function(postLiked) {
 	    var data = {'postLiked': postLiked,
 	    			'mail': Profile.email};
-	    
+
 	    return m.request ({
 	 		method: "POST",
 	 		url: "_ah/api/myApi/v1/likeIt"+'?access_token='+encodeURIComponent(Profile.id),
@@ -402,7 +416,8 @@ var Login = {
         return m('div',[
             m(Navbar),
             m('div.container',[
-                m("h1.title", 'Please Sign in with google to use the application')
+                m("h1.title", 'Please Sign in with google to use the application.'),
+                m("h2", 'If no sign in button appears on the top left of the screen, please refresh the page.'),
             ])
         ])
     }

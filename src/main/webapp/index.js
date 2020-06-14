@@ -1,25 +1,35 @@
 m.route(document.body, "/", {
     "/" : {
         onmatch: function() {
-            return Navbar
+            return MyApp;
         }
     },
     "/profile": {
         onmatch: function() {
             if (!auth2.isSignedIn.get()) m.route.set("/login");
-            else return Profile;
+            else return MyApp.Profile;
+        }
+    },
+    "/search": {
+        onmatch : function () {
+            return MyApp.SearchedUsersList;
         }
     },
     "/login": {
         onmatch: function () {
-            return Login;
+            return MyApp.Login;
         }
     }
 })
 
+var showProfile = false;
+var showSearchList = false;
+var showTimeline = false;
+
 var isLoggedIn = false;
 var auth2;
 var googleUser; // The current user
+
 
 gapi.load('auth2', function() {
     auth2 = gapi.auth2.init({
@@ -38,20 +48,20 @@ var signinChanged = function (loggedIn) {
         isLoggedIn = loggedIn;
         console.log('Signin state changed to ', loggedIn);
         if(loggedIn) {
-            Profile.name = googleUser.getBasicProfile().getName();
-            Profile.email = googleUser.getBasicProfile().getEmail();
-            Profile.firstName = googleUser.getBasicProfile().getGivenName();
-            Profile.lastName= googleUser.getBasicProfile().getFamilyName();
-            Profile.id = googleUser.getAuthResponse().id_token;
-            Profile.url = googleUser.getBasicProfile().getImageUrl();
+            MyApp.Profile.name = googleUser.getBasicProfile().getName();
+            MyApp.Profile.email = googleUser.getBasicProfile().getEmail();
+            MyApp.Profile.firstName = googleUser.getBasicProfile().getGivenName();
+            MyApp.Profile.lastName= googleUser.getBasicProfile().getFamilyName();
+            MyApp.Profile.id = googleUser.getAuthResponse().id_token;
+            MyApp.Profile.url = googleUser.getBasicProfile().getImageUrl();
 
         } else {
-            Profile.name = "";
-            Profile.firstName = "";
-            Profile.lastName = "";
-            Profile.email = "";
-            Profile.id = "";
-            Profile.url = "";
+            MyApp.Profile.name = "";
+            MyApp.Profile.firstName = "";
+            MyApp.Profile.lastName = "";
+            MyApp.Profile.email = "";
+            MyApp.Profile.id = "";
+            MyApp.Profile.url = "";
         }
     }
 };
@@ -60,17 +70,17 @@ var onSuccess = function(user) {
     googleUser = user;
     var profile = user.getBasicProfile();
 
-    Profile.name = profile.getName();
-    Profile.firstName = profile.getGivenName();
-    Profile.lastName= profile.getFamilyName();
-    Profile.email = profile.getEmail();
-    Profile.id = user.getAuthResponse().id_token;
-    Profile.url = profile.getImageUrl();
+    MyApp.Profile.name = profile.getName();
+    MyApp.Profile.firstName = profile.getGivenName();
+    MyApp.Profile.lastName= profile.getFamilyName();
+    MyApp.Profile.email = profile.getEmail();
+    MyApp.Profile.id = user.getAuthResponse().id_token;
+    MyApp.Profile.url = profile.getImageUrl();
 
-    console.log(Profile);
+    console.log(MyApp.Profile);
     isLoggedIn=true;
 
-    Profile.tinyUser();
+    MyApp.Profile.tinyUser();
     m.route.set("/");
 };
 
@@ -91,7 +101,43 @@ var userChanged = function (user) {
     }
 };
 
-var signInButton = {
+var MyApp = {
+    view: function (ctrl) {
+        return (
+            m("div", [
+                m(MyApp.Navbar, {}),
+            ])
+        )
+    }
+}
+
+MyApp.Navbar = {
+    view: function () {
+        return (m("nav.navbar.navbar-expand-lg.navbar-light.mb-5", [
+            m(".collapse.navbar-collapse[id='navbarSupportedContent']", [
+                m("ul.navbar-nav.mr-auto", [
+                    m("li.nav-item mr-5", [
+                        m(MyApp.signInButton),
+                    ]),
+                    m("li.nav-item",
+                        m("h2",
+                            m("a.nav-link[href='#']", ["Home ",m("span.sr-only", "(current)")])
+                        )
+                    ),
+                    m("li.nav-item",
+                        m("h2",
+                            m(m.route.Link, {href: "/profile", oncreate: m.route.link, onupdate: m.route.link, class:"nav-link"}, "My Profile")
+                        )
+                    )
+                ]),
+                m(MyApp.searchBar)
+            ])
+        ]));
+    },
+
+}
+
+MyApp.signInButton = {
     view: function () {
         return m("div", {
                 "class":"g-signin2",
@@ -101,17 +147,65 @@ var signInButton = {
     }
 }
 
-
-var profilPicAndSignOut = {
+MyApp.searchBar = {
     view: function () {
-        if(Profile.id!="") {
+        if(MyApp.Profile.id!="") {
+            return m("div.form-inline", [
+                m("div",
+                    m("form.form-inline.my-2.my-lg-0[action='/search'][method='post']", {
+                        id:"searchForm"
+                    }, [
+                        m("input.form-control.mr-sm-2[aria-label='Search'][id='search'][name='search'][placeholder='Search users'][type='search']"),
+                        m("input[id='me'][name='me'][type='hidden'][value=" + MyApp.Profile.email + "]"),
+                        m("button.btn.btn-outline-success.my-2.my-sm-0.mr-2[type='submit']",{
+                            onclick: function (e) {
+                                e.preventDefault();
+                                $.ajax({
+                                    type: 'POST',
+                                    url: $("#searchForm").attr('action'),
+                                    data: $("#searchForm").serialize()
+                                }).done(function (response) {
+                                    showSearchList = true;
+                                    var i = 0;
+                                    response.tinyUser.forEach(tinyUser => {
+                                        MyApp.SearchedUsersList.tinyUser[i] = {
+                                            email:tinyUser.email,
+                                            name:tinyUser.name,
+                                            inversedName:tinyUser.inversedName,
+                                            firstName:tinyUser.firstName,
+                                            lastName:tinyUser.lastName,
+                                            friend:tinyUser.friend,
+                                        }
+                                    });
+                                    m.route.set("/search");
+                                })
+                            }
+                        } , "Search"),
+                    ]),
+                ),
+                m(MyApp.profilePicAndSignOut)
+            ]);
+        } else {
+            return (
+                m("form.form-inline.my-2.my-lg-0[action='/search'][method='post']", [
+                    m("input.form-control.mr-sm-2[aria-label='Search'][id='search'][name='search'][placeholder='Please connect beforehand'][type='search'] [disabled='true']"),
+                    m("button.btn.btn-outline-success.my-2.my-sm-0[type='submit'] [disabled='true']", "Search")
+                ])
+            );
+        }
+    }
+}
+
+MyApp.profilePicAndSignOut = {
+    view: function () {
+        if(MyApp.Profile.id!="") {
             return m("div.form-inline.my-2.my-lg-0", [
                 m("span[aria-controls='collapseSignOut'][aria-expanded='false'][data-target='#collapseSignOut'][data-toggle='collapse']",
                     m("img.mr-sm-2", {
                         class:"profile_image",
                         "style":"height:42px",
-                        "src":Profile.url,
-                        "alt":Profile.name,
+                        "src":MyApp.Profile.url,
+                        "alt":MyApp.Profile.name,
                     }),
                 ),
                 m(".collapse[id='collapseSignOut'].my-2.my-sm-", [
@@ -128,57 +222,58 @@ var profilPicAndSignOut = {
     }
 }
 
-var searchBar = {
-    view: function () {
-        if(Profile.id!="") {
-            return m("div.form-inline", [
-                m("div",
-                    m("form.form-inline.my-2.my-lg-0[action='/search'][method='post']", [
-                        m("input.form-control.mr-sm-2[aria-label='Search'][id='search'][name='search'][placeholder='Search users'][type='search']"),
-                        m("input[id='me'][name='me'][type='hidden'][value=" + Profile.email + "]"),
-                        m("button.btn.btn-outline-success.my-2.my-sm-0.mr-2[type='submit']", "Search"),
-                    ]),
-                ),
-                m(profilPicAndSignOut)
-            ]);
-        } else {
-            return (
-                m("form.form-inline.my-2.my-lg-0[action='/search'][method='post']", [
-                    m("input.form-control.mr-sm-2[aria-label='Search'][id='search'][name='search'][placeholder='Please connect beforehand'][type='search'] [disabled='true']"),
-                    m("button.btn.btn-outline-success.my-2.my-sm-0[type='submit'] [disabled='true']", "Search")
+MyApp.SearchedUsersList = {
+    tinyUser: [],
+    view: function (vnode) {
+        return (
+            m("div", [
+                m(MyApp.Navbar),
+                m("div.container", [
+                    m('table', {
+                        class:'table is-striped',
+                        "table":"is-striped"
+                    },[
+                        m('tr', [
+                            m('th', {
+                                "style":"width:40vw"
+                            }, "Email"),
+                            m('th', {
+                                "style":"width:30vw"
+                            }, "Name"),
+                            m('th', {
+                                "style":"width:30vw"
+                            }, "Friend ?"),
+                        ]),
+                        MyApp.SearchedUsersList.tinyUser.map(function(tinyUser) {
+                            return m("tr", [
+                                m('td', {
+                                    "style":"width:40vw"
+                                }, m('span', tinyUser.email)
+                                ),
+                                m('td', {
+                                    "style":"width:30vw"
+                                }, m('span', tinyUser.name)
+                                ),
+                                m('td', {
+                                    "style":"width:30vw"
+                                }, m('span', tinyUser.friend)
+                                ),
+                            ])
+                        })
+                    ])
                 ])
-            );
-        }
+            ])
+        )
     }
 }
 
-var Navbar = {
+MyApp.Timeline = {
     view: function () {
-        return (m("nav.navbar.navbar-expand-lg.navbar-light.mb-5", [
-            m(".collapse.navbar-collapse[id='navbarSupportedContent']", [
-                m("ul.navbar-nav.mr-auto", [
-                    m("li.nav-item mr-5", [
-                        m(signInButton),
-                    ]),
-                    m("li.nav-item",
-                        m("h2",
-                            m("a.nav-link[href='#']", ["Home ",m("span.sr-only", "(current)")])
-                        )
-                    ),
-                    m("li.nav-item",
-                        m("h2",
-                            m(m.route.Link, {href: "/profile", oncreate: m.route.link, onupdate: m.route.link, class:"nav-link"}, "My Profile")
-                        )
-                    )
-                ]),
-                m(searchBar)
-            ])
-        ]));
-    },
-
+        return m("span","this is the timeline");
+    }
 }
 
-var Profile = {
+MyApp.Profile = {
     name: "",
     firstName: "",
     lastName: "",
@@ -190,28 +285,28 @@ var Profile = {
     list:[],
     view: function(){
         return m('div',[
-            m(Navbar),
+            m(MyApp.Navbar),
             m('div', {class:'container'},[
                 m('div', {class:"row"},[
                     m('div', {class:"col-md-2 col-sm-2 col-xs-2"},
                         m("img", {
                             class:"profile_image",
-                            "src":Profile.url
+                            "src":MyApp.Profile.url
                         })
                     ),
                     m('div', {class:"col-md-8 col-sm-8 col-xs-8"},
                         m("h1", {
                             class: 'title'
-                        }, Profile.name),
+                        }, MyApp.Profile.name),
                         m("h2", {
                             class: 'subtitle'
-                        }, Profile.email)
+                        }, MyApp.Profile.email)
                     ),
                     m('div', {class:"col-md-2 col-sm-2 col-xs-2"},
                         m("button", {
                             class:"btn btn-info float-right",
                             onclick: function () {
-                                Profile.loadList();
+                                MyApp.Profile.loadList();
                             },
                         },"Load Messages")
                     )]
@@ -225,7 +320,7 @@ var Profile = {
                             e.preventDefault()
                             if (url="") {url="https://dummyimage.com/320x200/000/fff&text="+Date.now()}
                             if (body="") {body="bla bla bla \n"+Date.now()}
-                            Profile.postMessage()
+                            MyApp.Profile.postMessage()
                         }},
                         [
                             m('div', {
@@ -237,7 +332,7 @@ var Profile = {
                                         class:'input is-rounded',
                                         placeholder:"Your url",
                                         oninput: function(e) {
-                                            Profile.url = e.target.value
+                                            MyApp.Profile.url = e.target.value
                                         }
                                     })
                                 ),
@@ -249,7 +344,7 @@ var Profile = {
                                         class:'textarea',
                                         placeholder:"your text",
                                         oninput: function(e) {
-                                            Profile.content = e.target.value
+                                            MyApp.Profile.content = e.target.value
                                         }
                                     })
                                 ),
@@ -265,26 +360,26 @@ var Profile = {
                     m("button.mt-3", {
                         class:"btn btn-info float-right",
                         onclick: function () {
-                            Profile.postMessage()
+                            MyApp.Profile.postMessage()
                         },
                     },"Post Random Message"),
                 ]),
-                m("div",m(PostView,{profile: Profile}))
+                m("div",m(PostView,{profile: MyApp.Profile}))
             ])
         ])
     },
     loadList: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(Profile.id)
+            url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(MyApp.Profile.id)
         })
         .then(function(result) {
             console.log("load_list:",result)
-            Profile.list=result.items
+            MyApp.Profile.list=result.items
             if ('nextPageToken' in result) {
-                    Profile.nextToken= result.nextPageToken
+                MyApp.Profile.nextToken= result.nextPageToken
             } else {
-                Profile.nextToken=""
+                MyApp.Profile.nextToken=""
             }
         })
     },
@@ -293,55 +388,57 @@ var Profile = {
             method: "GET",
             url: "_ah/api/myApi/v1/collectionresponse_entity",
             params: {
-                'next':Profile.nextToken,
-                'access_token': encodeURIComponent(Profile.id)
+                'next':MyApp.Profile.nextToken,
+                'access_token': encodeURIComponent(MyApp.Profile.id)
             }
         })
         .then(function(result) {
             console.log("next:",result)
-            result.items.map(function(item){Profile.list.push(item)})
+            result.items.map(function(item){MyApp.Profile.list.push(item)})
             if ('nextPageToken' in result) {
-                    Profile.nextToken= result.nextPageToken
+                MyApp.Profile.nextToken= result.nextPageToken
             } else {
-                Profile.nextToken=""
+                MyApp.Profile.nextToken=""
             }
         })
     },
     postMessage: function() {
         var data={'url': "https://dummyimage.com/320x200/000/fff&text="+Date.now(),
-                'body': Profile.content}
+                'body': MyApp.Profile.content}
         console.log("post:"+data)
         return m.request({
             method: "POST",
-            url: "_ah/api/myApi/v1/postMsg"+'?access_token='+encodeURIComponent(Profile.id),
+            url: "_ah/api/myApi/v1/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
             params: data,
         })
         .then(function(result) {
             console.log("post_message:",result)
-            Profile.loadList()
+            MyApp.Profile.loadList()
         })
     },
     tinyUser: function() {
         var data = {
-            'email': Profile.email,
-            'firstName': Profile.firstName,
-            'lastName': Profile.lastName,
+            'email': MyApp.Profile.email,
+            'firstName': MyApp.Profile.firstName,
+            'lastName': MyApp.Profile.lastName,
+            'name': MyApp.Profile.name,
+            'inversedName': MyApp.Profile.lastName + " " + MyApp.Profile.firstName
         };
         return m.request ({
             method: "POST",
-            url: "_ah/api/myApi/v1/tinyUser"+'?access_token='+encodeURIComponent(Profile.id),
+            url: "_ah/api/myApi/v1/tinyUser"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
             params: data,
         })
     },
 	likeIt: function(postLiked) {
 	    var data = {
             'postLiked': postLiked,
-            'mail': Profile.email
+            'mail': MyApp.Profile.email
         };
 
 	    return m.request ({
 	 		method: "POST",
-	 		url: "_ah/api/myApi/v1/likeIt"+'?access_token='+encodeURIComponent(Profile.id),
+	 		url: "_ah/api/myApi/v1/likeIt"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
 	 		params: data,
 		})
 	}
@@ -428,7 +525,7 @@ var PostView = {
 var Login = {
     view: function() {
         return m('div',[
-            m(Navbar),
+            m(MyApp.Navbar),
             m('div.container',[
                 m("h1.title", 'Please Sign in with google to use the application.'),
                 m("h2", 'If no sign in button appears on the top left of the screen, please refresh the page.'),

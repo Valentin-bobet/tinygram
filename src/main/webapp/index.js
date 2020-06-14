@@ -171,9 +171,10 @@ MyApp.searchBar = {
                                         MyApp.SearchedUsersList.tinyUser[i] = {
                                             email:tinyUser.email,
                                             name:tinyUser.name,
-                                            inversedName:tinyUser.inversedName,
+                                            invertedName:tinyUser.invertedName,
                                             firstName:tinyUser.firstName,
                                             lastName:tinyUser.lastName,
+                                            url:tinyUser.url,
                                             friend:tinyUser.friend,
                                         }
                                     });
@@ -233,30 +234,35 @@ MyApp.SearchedUsersList = {
                         class:'table is-striped',
                         "table":"is-striped"
                     },[
-                        m('tr', [
-                            m('th', {
-                                "style":"width:40vw"
-                            }, "Email"),
-                            m('th', {
-                                "style":"width:30vw"
-                            }, "Name"),
-                            m('th', {
-                                "style":"width:30vw"
-                            }, "Friend ?"),
-                        ]),
                         MyApp.SearchedUsersList.tinyUser.map(function(tinyUser) {
-                            return m("tr", [
+                            return m("tr", {
+                                "style":"height:9vh"
+                            }, [
                                 m('td', {
-                                    "style":"width:40vw"
-                                }, m('span', tinyUser.email)
+                                    "style":"width:10vw"
+                                },  m('img',
+                                    {
+                                        "style":"height:8vh",
+                                        class:"profile_image",
+                                        'src': tinyUser.url,
+                                        'alt':tinyUser.name,
+                                    })
                                 ),
+                                m('td.inline', {
+                                    "style":"width:80vw"
+                                }, [
+                                    m('h1', tinyUser.name),
+                                    m('span', "("+tinyUser.email+")"),
+
+                                ]),
                                 m('td', {
-                                    "style":"width:30vw"
-                                }, m('span', tinyUser.name)
-                                ),
-                                m('td', {
-                                    "style":"width:30vw"
-                                }, m('span', tinyUser.friend)
+                                    "style":"width:12vw"
+                                }, m('button.btn.float-right', {
+                                    class:tinyUser.friend?"btn-danger":"btn-success",
+                                    onclick: function () {
+                                        tinyUser.friend?console.log("Unfollowed"):console.log("Followed");
+                                    }
+                                }, tinyUser.friend?"Unfollow":"Follow")
                                 ),
                             ])
                         })
@@ -364,7 +370,7 @@ MyApp.Profile = {
                         },
                     },"Post Random Message"),
                 ]),
-                m("div",m(PostView,{profile: MyApp.Profile}))
+                m("div",m(MyApp.PostView,{profile: MyApp.Profile}))
             ])
         ])
     },
@@ -422,7 +428,8 @@ MyApp.Profile = {
             'firstName': MyApp.Profile.firstName,
             'lastName': MyApp.Profile.lastName,
             'name': MyApp.Profile.name,
-            'inversedName': MyApp.Profile.lastName + " " + MyApp.Profile.firstName
+            'invertedName': MyApp.Profile.lastName + " " + MyApp.Profile.firstName,
+            'url': MyApp.Profile.url,
         };
         return m.request ({
             method: "POST",
@@ -444,7 +451,7 @@ MyApp.Profile = {
 	}
 }
 
-var PostView = {
+MyApp.PostView = {
     view: function(vnode) {
         return m('div', [
             m('div',{class:'subtitle'},"My Posts"),
@@ -522,7 +529,7 @@ var PostView = {
     }
 }
 
-var Login = {
+MyApp.Login = {
     view: function() {
         return m('div',[
             m(MyApp.Navbar),

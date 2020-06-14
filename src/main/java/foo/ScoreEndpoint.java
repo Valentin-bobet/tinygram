@@ -242,9 +242,10 @@ public class ScoreEndpoint {
 			Entity e = new Entity("tinyUser");
 			e.setProperty("email", tinyUser.email);
 			e.setProperty("name", tinyUser.name);
-			e.setProperty("inversedName", tinyUser.inversedName);
+			e.setProperty("invertedName", tinyUser.invertedName);
 			e.setProperty("firstName", tinyUser.firstName);
 			e.setProperty("lastName", tinyUser.lastName);
+			e.setProperty("url", tinyUser.url);
 
 			DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
 			Transaction txn = datastore_2.beginTransaction();

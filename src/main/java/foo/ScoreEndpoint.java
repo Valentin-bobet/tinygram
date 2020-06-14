@@ -39,12 +39,12 @@ import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream
 
 @Api(name = "myApi",
      version = "v1",
-     audiences = "235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com",
-  	 clientIds = "235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com",
+     audiences = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
+  	 clientIds = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
-		   ownerDomain = "essai-tinygram.appspot.com",
-		   ownerName = "essai-tinygram.appspot.com",
+		   ownerDomain = "tinygram-lucas.appspot.com",
+		   ownerName = "tinygram-lucas.appspot.com",
 		   packagePath = "")
      )
 
@@ -223,25 +223,27 @@ public class ScoreEndpoint {
 	}
 
 	@ApiMethod(name= "tinyUser", httpMethod = HttpMethod.POST)
-	public Entity tinyUser(User user) throws UnauthorizedException {
+	public Entity tinyUser(User user, TinyUser tinyUser) throws UnauthorizedException {
 
 		if (user == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
-		
+
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		
+
 	    Query searchQuery = new Query("tinyUser").setFilter(
-	    		new FilterPredicate("email", FilterOperator.EQUAL, user.getEmail()));
-	    
+	    		new FilterPredicate("email", FilterOperator.EQUAL, tinyUser.email));
+
 	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
-	    
+
 		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
-		
+
 		if(searchQueryResult.isEmpty()) {
 			Entity e = new Entity("tinyUser");
-			e.setProperty("email", user.getEmail());
-			
+			e.setProperty("firstName", tinyUser.firstName);
+			e.setProperty("lastName", tinyUser.lastName);
+			e.setProperty("email", tinyUser.email);
+
 			DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
 			Transaction txn = datastore_2.beginTransaction();
 			datastore_2.put(e);
@@ -250,29 +252,29 @@ public class ScoreEndpoint {
 		}
 		return null;
 	}
-	
+
 	@ApiMethod(name= "likeIt", httpMethod = HttpMethod.POST)
 	public Entity likeIt(User u, Like like) throws UnauthorizedException {
-		
+
 		if (u.getEmail() == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
-		
+
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		
+
 	    Query searchQuery = new Query("like").setFilter(CompositeFilterOperator.and(
 	    		new FilterPredicate("Email", FilterOperator.EQUAL, u.getEmail()),
 	    		new FilterPredicate("Post", FilterOperator.EQUAL, like.getPostLiked())));
-	    
+
 	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
-	    
+
 		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
-		
+
 		if(searchQueryResult.isEmpty()) {
 			Entity e = new Entity("like");
 			e.setProperty("Email", u.getEmail());
 			e.setProperty("Post", like.getPostLiked());
-			
+
 			DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
 			Transaction txn = datastore_2.beginTransaction();
 			datastore_2.put(e);

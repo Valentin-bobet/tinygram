@@ -40,11 +40,15 @@ var signinChanged = function (loggedIn) {
         if(loggedIn) {
             Profile.name = googleUser.getBasicProfile().getName();
             Profile.email = googleUser.getBasicProfile().getEmail();
+            Profile.firstName = googleUser.getBasicProfile().getGivenName();
+            Profile.lastName= googleUser.getBasicProfile().getFamilyName();
             Profile.id = googleUser.getAuthResponse().id_token;
             Profile.url = googleUser.getBasicProfile().getImageUrl();
 
         } else {
             Profile.name = "";
+            Profile.firstName = "";
+            Profile.lastName = "";
             Profile.email = "";
             Profile.id = "";
             Profile.url = "";
@@ -57,6 +61,8 @@ var onSuccess = function(user) {
     var profile = user.getBasicProfile();
 
     Profile.name = profile.getName();
+    Profile.firstName = profile.getGivenName();
+    Profile.lastName= profile.getFamilyName();
     Profile.email = profile.getEmail();
     Profile.id = user.getAuthResponse().id_token;
     Profile.url = profile.getImageUrl();
@@ -174,6 +180,8 @@ var Navbar = {
 
 var Profile = {
     name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     id: "",
     url: "",
@@ -314,7 +322,11 @@ var Profile = {
         })
     },
     tinyUser: function() {
-        var data = {'email': Profile.email};
+        var data = {
+            'email': Profile.email,
+            'firstName': Profile.firstName,
+            'lastName': Profile.lastName,
+        };
         return m.request ({
             method: "POST",
             url: "_ah/api/myApi/v1/tinyUser"+'?access_token='+encodeURIComponent(Profile.id),
@@ -322,8 +334,10 @@ var Profile = {
         })
     },
 	likeIt: function(postLiked) {
-	    var data = {'postLiked': postLiked,
-	    			'mail': Profile.email};
+	    var data = {
+            'postLiked': postLiked,
+            'mail': Profile.email
+        };
 
 	    return m.request ({
 	 		method: "POST",

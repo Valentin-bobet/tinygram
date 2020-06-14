@@ -39,7 +39,14 @@ public class SearchUserQuery extends HttpServlet {
 
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         Query searchQuery = new Query("tinyUser").setFilter(
-        		new FilterPredicate("email", FilterOperator.EQUAL, search));
+			new CompositeFilter(CompositeFilterOperator.OR, Arrays.asList(
+				new FilterPredicate("email", FilterOperator.EQUAL, search),
+				new FilterPredicate("firstName", FilterOperator.EQUAL, search),
+				new FilterPredicate("lastName", FilterOperator.EQUAL, search),
+				new FilterPredicate("name", FilterOperator.EQUAL, search),
+				new FilterPredicate("inversedName", FilterOperator.EQUAL, search)
+			))
+		);
         PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
 		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
 
@@ -49,9 +56,11 @@ public class SearchUserQuery extends HttpServlet {
 			usersJson = "{\"tinyUser\": [";
 			for (Entity tinyUser : searchQueryResult) {
 				usersJson += "{";
+				usersJson += "\"email\":\""+tinyUser.getProperty("email")+"\",";
+				usersJson += "\"name\":\""+tinyUser.getProperty("name")+"\",";
+				usersJson += "\"invertedName\":\""+tinyUser.getProperty("invertedName")+"\",";
 				usersJson += "\"firstName\":\""+tinyUser.getProperty("firstName")+"\",";
 				usersJson += "\"lastName\":\""+tinyUser.getProperty("lastName")+"\",";
-				usersJson += "\"email\":\""+tinyUser.getProperty("email")+"\",";
 
 				DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
 		        Query friendQuery = new Query("Friendship").setFilter(CompositeFilterOperator.and(

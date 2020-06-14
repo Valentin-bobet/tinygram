@@ -34,28 +34,25 @@ public class SearchUserQuery extends HttpServlet {
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String search = request.getParameter("search");
         String me = request.getParameter("me");
-
-        response.setContentType("text/html");
+		response.setContentType("application/json");
         PrintWriter out = response.getWriter();
-        out.println("<html>");
-        out.println("<body>");
-        out.println("<h1>Search results :</h1>");
-        out.println("</body>");
-        out.println("</html>");
 
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         Query searchQuery = new Query("tinyUser").setFilter(
         		new FilterPredicate("email", FilterOperator.EQUAL, search));
         PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
 		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
-		if(searchQueryResult.isEmpty()) {
-			out.println("<p>Sorry, no result found</p>");
-		} else {
-			out.print("<li> Result:" + searchQueryResult.size() + "<br>");
 
-			for (Entity entity : searchQueryResult) {
-				out.print("<li>" + entity.getProperty("email"));
-				
+		String usersJson="{}";
+		int users_count=1;
+		if(!searchQueryResult.isEmpty()) {
+			usersJson = "{\"tinyUser\": [";
+			for (Entity tinyUser : searchQueryResult) {
+				usersJson += "{";
+				usersJson += "\"firstName\":\""+tinyUser.getProperty("firstName")+"\",";
+				usersJson += "\"lastName\":\""+tinyUser.getProperty("lastName")+"\",";
+				usersJson += "\"email\":\""+tinyUser.getProperty("email")+"\",";
+
 				DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
 		        Query friendQuery = new Query("Friendship").setFilter(CompositeFilterOperator.and(
 		        		new FilterPredicate("askingUser", FilterOperator.EQUAL, me),
@@ -63,16 +60,19 @@ public class SearchUserQuery extends HttpServlet {
 		        		));
 		        PreparedQuery preparedFriendQuery = datastore_2.prepare(friendQuery);
 				List<Entity> friendQueryResult = preparedFriendQuery.asList(FetchOptions.Builder.withDefaults());
-				
+
 				if (friendQueryResult.isEmpty()) {
-					
-					out.print("Pas ami");
-					
+					usersJson += "\"friend\":false}";
+
 				} else {
-					out.print("Ami");
+					usersJson += "\"friend\":true}";
 				}
-				
+				if(users_count != searchQueryResult.size()) usersJson += ",";
+				users_count++;
 			}
+			usersJson += "]}";
 		}
+		out.print(usersJson);
+		out.flush();
     }
 }

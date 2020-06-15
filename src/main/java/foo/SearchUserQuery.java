@@ -66,7 +66,7 @@ public class SearchUserQuery extends HttpServlet {
 				DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
 		        Query friendQuery = new Query("Friendship").setFilter(CompositeFilterOperator.and(
 		        		new FilterPredicate("askingUser", FilterOperator.EQUAL, me),
-		        		new FilterPredicate("targetUser", FilterOperator.EQUAL, tinyUser.getProperty("email"))
+		        		new FilterPredicate("targetUser", FilterOperator.EQUAL, search)
 		        		));
 		        PreparedQuery preparedFriendQuery = datastore_2.prepare(friendQuery);
 				List<Entity> friendQueryResult = preparedFriendQuery.asList(FetchOptions.Builder.withDefaults());
@@ -84,5 +84,52 @@ public class SearchUserQuery extends HttpServlet {
 		}
 		out.print(usersJson);
 		out.flush();
-    }
+	}
+
+	@Override
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		String email = request.getParameter("email");
+        String me = request.getParameter("me");
+		response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        Query searchQuery = new Query("tinyUser").setFilter(
+				new FilterPredicate("email", FilterOperator.EQUAL, email)
+				);
+        PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
+		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
+
+		String userJson="{}";
+		if(!searchQueryResult.isEmpty()) {
+			userJson = "{\"tinyUser\": [";
+			for (Entity tinyUser : searchQueryResult) {
+				userJson += "{";
+				userJson += "\"email\":\""+tinyUser.getProperty("email")+"\",";
+				userJson += "\"name\":\""+tinyUser.getProperty("name")+"\",";
+				userJson += "\"invertedName\":\""+tinyUser.getProperty("invertedName")+"\",";
+				userJson += "\"firstName\":\""+tinyUser.getProperty("firstName")+"\",";
+				userJson += "\"lastName\":\""+tinyUser.getProperty("lastName")+"\",";
+				userJson += "\"url\":\""+tinyUser.getProperty("url")+"\",";
+
+				DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
+		        Query friendQuery = new Query("Friendship").setFilter(CompositeFilterOperator.and(
+		        		new FilterPredicate("askingUser", FilterOperator.EQUAL, me),
+		        		new FilterPredicate("targetUser", FilterOperator.EQUAL, email)
+		        		));
+		        PreparedQuery preparedFriendQuery = datastore_2.prepare(friendQuery);
+				List<Entity> friendQueryResult = preparedFriendQuery.asList(FetchOptions.Builder.withDefaults());
+
+				if (friendQueryResult.isEmpty()) {
+					userJson += "\"friend\":false}";
+
+				} else {
+					userJson += "\"friend\":true}";
+				}
+			}
+			userJson += "]}";
+		}
+		out.print(userJson);
+		out.flush();
+	}
 }

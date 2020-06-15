@@ -1,18 +1,35 @@
 m.route(document.body, "/", {
     "/" : {
         onmatch: function() {
-            return MyApp;
+            return MyApp.Timeline;
+        }
+    },
+    "/home" : {
+        onmatch: function() {
+            if (!auth2.isSignedIn.get()) return MyApp.NotSignedIn
+            else return MyApp.Timeline;
         }
     },
     "/profile": {
         onmatch: function() {
             if (!auth2.isSignedIn.get()) m.route.set("/login");
-            else return MyApp.Profile;
+            else {
+                MyApp.User.userData = {};
+                return MyApp.Profile;
+            }
         }
     },
     "/search": {
         onmatch : function () {
             return MyApp.SearchedUsersList;
+        }
+    },
+    "/user": {
+        onmatch : function () {
+            if(Object.keys(MyApp.User.userData).length !=0) return MyApp.User;
+            else {
+                m.route.set("/");
+            }
         }
     },
     "/login": {
@@ -48,20 +65,20 @@ var signinChanged = function (loggedIn) {
         isLoggedIn = loggedIn;
         console.log('Signin state changed to ', loggedIn);
         if(loggedIn) {
-            MyApp.Profile.name = googleUser.getBasicProfile().getName();
-            MyApp.Profile.email = googleUser.getBasicProfile().getEmail();
-            MyApp.Profile.firstName = googleUser.getBasicProfile().getGivenName();
-            MyApp.Profile.lastName= googleUser.getBasicProfile().getFamilyName();
-            MyApp.Profile.id = googleUser.getAuthResponse().id_token;
-            MyApp.Profile.url = googleUser.getBasicProfile().getImageUrl();
+            MyApp.Profile.userData.name = googleUser.getBasicProfile().getName();
+            MyApp.Profile.userData.email = googleUser.getBasicProfile().getEmail();
+            MyApp.Profile.userData.firstName = googleUser.getBasicProfile().getGivenName();
+            MyApp.Profile.userData.lastName= googleUser.getBasicProfile().getFamilyName();
+            MyApp.Profile.userData.id = googleUser.getAuthResponse().id_token;
+            MyApp.Profile.userData.url = googleUser.getBasicProfile().getImageUrl();
 
         } else {
-            MyApp.Profile.name = "";
-            MyApp.Profile.firstName = "";
-            MyApp.Profile.lastName = "";
-            MyApp.Profile.email = "";
-            MyApp.Profile.id = "";
-            MyApp.Profile.url = "";
+            MyApp.Profile.userData.name = "";
+            MyApp.Profile.userData.firstName = "";
+            MyApp.Profile.userData.lastName = "";
+            MyApp.Profile.userData.email = "";
+            MyApp.Profile.userData.id = "";
+            MyApp.Profile.userData.url = "";
         }
     }
 };
@@ -70,14 +87,14 @@ var onSuccess = function(user) {
     googleUser = user;
     var profile = user.getBasicProfile();
 
-    MyApp.Profile.name = profile.getName();
-    MyApp.Profile.firstName = profile.getGivenName();
-    MyApp.Profile.lastName= profile.getFamilyName();
-    MyApp.Profile.email = profile.getEmail();
-    MyApp.Profile.id = user.getAuthResponse().id_token;
-    MyApp.Profile.url = profile.getImageUrl();
+    MyApp.Profile.userData.name = profile.getName();
+    MyApp.Profile.userData.firstName = profile.getGivenName();
+    MyApp.Profile.userData.lastName= profile.getFamilyName();
+    MyApp.Profile.userData.email = profile.getEmail();
+    MyApp.Profile.userData.id = user.getAuthResponse().id_token;
+    MyApp.Profile.userData.url = profile.getImageUrl();
 
-    console.log(MyApp.Profile);
+    console.log(MyApp.Profile.userData);
     isLoggedIn=true;
 
     MyApp.Profile.tinyUser();
@@ -106,6 +123,7 @@ var MyApp = {
         return (
             m("div", [
                 m(MyApp.Navbar, {}),
+
             ])
         )
     }
@@ -113,7 +131,7 @@ var MyApp = {
 
 MyApp.Navbar = {
     view: function () {
-        return (m("nav.navbar.navbar-expand-lg.navbar-light.mb-5", [
+        return (m("nav.navbar.navbar-expand-lg.navbar-light.mb-3", [
             m(".collapse.navbar-collapse[id='navbarSupportedContent']", [
                 m("ul.navbar-nav.mr-auto", [
                     m("li.nav-item mr-5", [
@@ -121,7 +139,7 @@ MyApp.Navbar = {
                     ]),
                     m("li.nav-item",
                         m("h2",
-                            m("a.nav-link[href='#']", ["Home ",m("span.sr-only", "(current)")])
+                            m(m.route.Link, {href: "/home", oncreate: m.route.link, onupdate: m.route.link, class:"nav-link"}, ["Home ",m("span.sr-only", "(current)")])
                         )
                     ),
                     m("li.nav-item",
@@ -149,14 +167,14 @@ MyApp.signInButton = {
 
 MyApp.searchBar = {
     view: function () {
-        if(MyApp.Profile.id!="") {
+        if(MyApp.Profile.userData.id!="") {
             return m("div.form-inline", [
                 m("div",
                     m("form.form-inline.my-2.my-lg-0[action='/search'][method='post']", {
                         id:"searchForm"
                     }, [
                         m("input.form-control.mr-sm-2[aria-label='Search'][id='search'][name='search'][placeholder='Search users'][type='search']"),
-                        m("input[id='me'][name='me'][type='hidden'][value=" + MyApp.Profile.email + "]"),
+                        m("input[id='me'][name='me'][type='hidden'][value=" + MyApp.Profile.userData.email + "]"),
                         m("button.btn.btn-outline-success.my-2.my-sm-0.mr-2[type='submit']",{
                             onclick: function (e) {
                                 e.preventDefault();
@@ -168,7 +186,7 @@ MyApp.searchBar = {
                                     showSearchList = true;
                                     var i = 0;
                                     response.tinyUser.forEach(tinyUser => {
-                                        MyApp.SearchedUsersList.tinyUser[i] = {
+                                        MyApp.SearchedUsersList.tinyUserList[i] = {
                                             email:tinyUser.email,
                                             name:tinyUser.name,
                                             invertedName:tinyUser.invertedName,
@@ -177,6 +195,7 @@ MyApp.searchBar = {
                                             url:tinyUser.url,
                                             friend:tinyUser.friend,
                                         }
+                                        i++;
                                     });
                                     m.route.set("/search");
                                 })
@@ -199,14 +218,14 @@ MyApp.searchBar = {
 
 MyApp.profilePicAndSignOut = {
     view: function () {
-        if(MyApp.Profile.id!="") {
+        if(MyApp.Profile.userData.id!="") {
             return m("div.form-inline.my-2.my-lg-0", [
                 m("span[aria-controls='collapseSignOut'][aria-expanded='false'][data-target='#collapseSignOut'][data-toggle='collapse']",
                     m("img.mr-sm-2", {
                         class:"profile_image",
                         "style":"height:42px",
-                        "src":MyApp.Profile.url,
-                        "alt":MyApp.Profile.name,
+                        "src":MyApp.Profile.userData.url,
+                        "alt":MyApp.Profile.userData.name,
                     }),
                 ),
                 m(".collapse[id='collapseSignOut'].my-2.my-sm-", [
@@ -224,7 +243,7 @@ MyApp.profilePicAndSignOut = {
 }
 
 MyApp.SearchedUsersList = {
-    tinyUser: [],
+    tinyUserList: [],
     view: function (vnode) {
         return (
             m("div", [
@@ -234,9 +253,32 @@ MyApp.SearchedUsersList = {
                         class:'table is-striped',
                         "table":"is-striped"
                     },[
-                        MyApp.SearchedUsersList.tinyUser.map(function(tinyUser) {
+                        MyApp.SearchedUsersList.tinyUserList.map(function(tinyUser) {
                             return m("tr", {
-                                "style":"height:9vh"
+                                "style":"height:9vh",
+                                onclick: function (e) {
+                                    e.preventDefault();
+                                    $.ajax({
+                                        type: 'GET',
+                                        url: "/search",
+                                        data: {email:tinyUser.email, me:MyApp.Profile.userData.email}
+                                    }).done(function (response) {
+                                        console.log(response);
+                                        var tinyUser =response.tinyUser[0];
+                                        MyApp.User.userData = {
+                                            email:tinyUser.email,
+                                            name:tinyUser.name,
+                                            invertedName:tinyUser.invertedName,
+                                            firstName:tinyUser.firstName,
+                                            lastName:tinyUser.lastName,
+                                            url:tinyUser.url,
+                                            friend:tinyUser.friend,
+                                            nextToken:"",
+                                            postList:[],
+                                        }
+                                        m.route.set("/user");
+                                    });
+                                }
                             }, [
                                 m('td', {
                                     "style":"width:10vw"
@@ -273,22 +315,206 @@ MyApp.SearchedUsersList = {
     }
 }
 
+
+MyApp.User = {
+    userData: {},
+    view: function (vnode) {
+        return (
+            m('div',[
+                m(MyApp.Navbar),
+                m('div', {class:'container'},[
+                    m('div', {class:"row"},[
+                        m('div', {class:"col-md-2 col-sm-2 col-xs-2"},
+                            m("img", {
+                                class:"profile_image",
+                                "src":MyApp.User.userData.url,
+                                "alt":MyApp.User.userData.name+"'s profile picture"
+                            })
+                        ),
+                        m('div', {class:"col-md-4 col-sm-4 col-xs-4"},
+                            m("h1", {
+                                class: 'title'
+                            }, MyApp.User.userData.name),
+                            m("h2", {
+                                class: 'subtitle'
+                            }, MyApp.User.userData.email)
+                        ),
+
+                        MyApp.Profile.userData.email != MyApp.User.userData.email?
+                            m('div', {class:"col-md-4 col-sm-4 col-xs-4"},
+                                m("button.btn.float-left", {
+                                    class: MyApp.User.userData.friend?"btn-danger":"btn-success",
+                                    onclick: function () {
+                                        if(MyApp.User.userData.friend) {
+                                            console.log("Removed from friend");
+                                        } else {
+                                            console.log("Added as friend");
+                                        }
+                                    }
+                                }, MyApp.User.userData.friend?"Remove from friend list":"Add as friend"),
+                            ):
+                            m('div', {class:"col-md-4 col-sm-4 col-xs-4"},
+                                m("span.btn.float-left", {
+                                    class:"btn-outline-info",
+                                    style:"cursor:inherit",
+                                    onclick: function (e) {
+                                        e.preventDefault();
+                                        m.route.set("/profile")
+                                    }
+                                }, "This is your public profile (click to access to your profile)"),
+                            ),
+                        m('div', {class:"col-md-2 col-sm-2 col-xs-2"},
+                            m("button", {
+                                class:"btn btn-info float-right",
+                                onclick: function () {
+                                    MyApp.User.loadList();
+                                },
+                            },"Load Messages")
+                        )]
+                    ),
+                    m("div",m(MyApp.PostView,{profile: MyApp.User, owned:false}))
+                ]),
+            ])
+        )
+    },
+    loadList: function() {
+        return m.request({
+            method: "GET",
+            url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
+        })
+        .then(function(result) {
+            console.log("load_list:",result)
+            MyApp.User.userData.postList=result.items
+            if ('nextPageToken' in result) {
+                MyApp.User.userData.nextToken= result.nextPageToken
+            } else {
+                MyApp.User.userData.nextToken=""
+            }
+        })
+    },
+    next: function() {
+        return m.request({
+            method: "GET",
+            url: "_ah/api/myApi/v1/collectionresponse_entity",
+            params: {
+                'next':MyApp.User.userData.nextToken,
+                'access_token': encodeURIComponent(MyApp.Profile.userData.id)
+            }
+        })
+        .then(function(result) {
+            console.log("next:",result)
+            result.items.map(function(item){MyApp.User.userData.postList.push(item)})
+            if ('nextPageToken' in result) {
+                MyApp.User.userData.nextToken= result.nextPageToken
+            } else {
+                MyApp.User.userData.nextToken=""
+            }
+        })
+    },
+}
+
 MyApp.Timeline = {
     view: function () {
-        return m("span","this is the timeline");
+        if (MyApp.Profile.userData.id == "") return m(MyApp.NotSignedIn);
+        else {
+            return m("div", [
+                m(MyApp.Navbar),
+                m("div.container", [
+                    m("h1","this is the timeline")
+                ])
+            ]);
+        }
+    }
+}
+
+MyApp.NotSignedIn = {
+    view: function () {
+        return m("div", [
+            m(MyApp.Navbar),
+            m("div.container", [
+                m("div.row.mb-3",
+                    m("div", {
+                        class:"title col-md-12 col-sm-12 col-xs-12"
+                    },
+                        m("h1", "Join us on Tinygram to see your friends' posts !"))
+                ),
+                m("div.row.mt-1", [
+                    m("div", {
+                        class:"col-md-4 col-sm-4 col-xs-4"
+                    },m("img.my-auto", {
+                        "src":"static/images/japanese_bridge.jpg",
+                        "alt":"Japanese bridge"
+                    })),
+                    m("div", {
+                        class:"col-md-4 col-sm-4 col-xs-4"
+                    },m("img.my-auto", {
+                        "src":"static/images/instagram_101.jpg",
+                        "alt":"would-be-nice-on-insta-101"
+                    })),
+                    m("div", {
+                        class:"col-md-4 col-sm-4 col-xs-4"
+                    },m("img.my-auto", {
+                        "src":"static/images/floating-homes-in-the-beautiful-dusk-light.jpg",
+                        "alt":"Floating homes in the beautiful dusk light"
+                    })),
+                ]),
+                m("div.row.mt-1", [
+                    m("div", {
+                        class:"col-md-4 col-sm-4 col-xs-4"
+                    },m("img.my-auto", {
+                        "src":"static/images/skyrim.jpg",
+                        "alt":"skyrim > real world"
+                    })),
+                    m("div", {
+                        class:"col-md-4 col-sm-4 col-xs-4"
+                    },m("img.my-auto", {
+                        "src":"static/images/sun_behind_trees.jpg",
+                        "alt":"The sun behind trees (it always is behind things tho)"
+                    })),
+                    m("div", {
+                        class:"col-md-4 col-sm-4 col-xs-4"
+                    },m("img.my-auto", {
+                        "src":"static/images/kaermorhen.jpg",
+                        "alt":"Kaer morhen looks nice"
+                    }))
+                ]),
+                m("div.row.mt-1", [
+                    m("div", {
+                        class:"col-md-4 col-sm-4 col-xs-4"
+                    },m("img.my-auto", {
+                        "src":"static/images/trees.jpg",
+                        "alt":"Mmmmmmh... trees"
+                    })),
+                    m("div", {
+                        class:"col-md-4 col-sm-4 col-xs-4"
+                    },m("img.my-auto", {
+                        "src":"static/images/winter_sunset.jpg",
+                        "alt":"Winter is gorgeous but kinda sucks anyway"
+                    })),
+                    m("div", {
+                        class:"col-md-4 col-sm-4 col-xs-4"
+                    },m("img.my-auto", {
+                        "src":"static/images/windows_like.jpg",
+                        "alt":"Is it a windows wallpaper ??"
+                    }))
+                ]),
+            ])
+        ]);
     }
 }
 
 MyApp.Profile = {
-    name: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    id: "",
-    url: "",
-    content:"",
-    nextToken:"",
-    list:[],
+    userData: {
+        name: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        id: "",
+        url: "",
+        content:"",
+        nextToken:"",
+        postList:[],
+    },
     view: function(){
         return m('div',[
             m(MyApp.Navbar),
@@ -297,16 +523,16 @@ MyApp.Profile = {
                     m('div', {class:"col-md-2 col-sm-2 col-xs-2"},
                         m("img", {
                             class:"profile_image",
-                            "src":MyApp.Profile.url
+                            "src":MyApp.Profile.userData.url
                         })
                     ),
                     m('div', {class:"col-md-8 col-sm-8 col-xs-8"},
                         m("h1", {
                             class: 'title'
-                        }, MyApp.Profile.name),
+                        }, MyApp.Profile.userData.name),
                         m("h2", {
                             class: 'subtitle'
-                        }, MyApp.Profile.email)
+                        }, MyApp.Profile.userData.email)
                     ),
                     m('div', {class:"col-md-2 col-sm-2 col-xs-2"},
                         m("button", {
@@ -338,7 +564,7 @@ MyApp.Profile = {
                                         class:'input is-rounded',
                                         placeholder:"Your url",
                                         oninput: function(e) {
-                                            MyApp.Profile.url = e.target.value
+                                            MyApp.Profile.userData.url = e.target.value
                                         }
                                     })
                                 ),
@@ -350,7 +576,7 @@ MyApp.Profile = {
                                         class:'textarea',
                                         placeholder:"your text",
                                         oninput: function(e) {
-                                            MyApp.Profile.content = e.target.value
+                                            MyApp.Profile.userData.content = e.target.value
                                         }
                                     })
                                 ),
@@ -370,22 +596,22 @@ MyApp.Profile = {
                         },
                     },"Post Random Message"),
                 ]),
-                m("div",m(MyApp.PostView,{profile: MyApp.Profile}))
+                m("div",m(MyApp.PostView,{profile: MyApp.Profile, owned: true}))
             ])
         ])
     },
     loadList: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(MyApp.Profile.id)
+            url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
         })
         .then(function(result) {
             console.log("load_list:",result)
-            MyApp.Profile.list=result.items
+            MyApp.Profile.userData.postList=result.items
             if ('nextPageToken' in result) {
-                MyApp.Profile.nextToken= result.nextPageToken
+                MyApp.Profile.userData.nextToken= result.nextPageToken
             } else {
-                MyApp.Profile.nextToken=""
+                MyApp.Profile.userData.nextToken=""
             }
         })
     },
@@ -394,15 +620,15 @@ MyApp.Profile = {
             method: "GET",
             url: "_ah/api/myApi/v1/collectionresponse_entity",
             params: {
-                'next':MyApp.Profile.nextToken,
-                'access_token': encodeURIComponent(MyApp.Profile.id)
+                'next':MyApp.Profile.userData.nextToken,
+                'access_token': encodeURIComponent(MyApp.Profile.userData.id)
             }
         })
         .then(function(result) {
             console.log("next:",result)
-            result.items.map(function(item){MyApp.Profile.list.push(item)})
+            result.items.map(function(item){MyApp.Profile.userData.postList.push(item)})
             if ('nextPageToken' in result) {
-                MyApp.Profile.nextToken= result.nextPageToken
+                MyApp.Profile.userData.nextToken= result.nextPageToken
             } else {
                 MyApp.Profile.nextToken=""
             }
@@ -410,11 +636,11 @@ MyApp.Profile = {
     },
     postMessage: function() {
         var data={'url': "https://dummyimage.com/320x200/000/fff&text="+Date.now(),
-                'body': MyApp.Profile.content}
+                'body': MyApp.Profile.userData.content}
         console.log("post:"+data)
         return m.request({
             method: "POST",
-            url: "_ah/api/myApi/v1/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
+            url: "_ah/api/myApi/v1/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
             params: data,
         })
         .then(function(result) {
@@ -424,28 +650,28 @@ MyApp.Profile = {
     },
     tinyUser: function() {
         var data = {
-            'email': MyApp.Profile.email,
-            'firstName': MyApp.Profile.firstName,
-            'lastName': MyApp.Profile.lastName,
-            'name': MyApp.Profile.name,
-            'invertedName': MyApp.Profile.lastName + " " + MyApp.Profile.firstName,
-            'url': MyApp.Profile.url,
+            'email': MyApp.Profile.userData.email,
+            'firstName': MyApp.Profile.userData.firstName,
+            'lastName': MyApp.Profile.userData.lastName,
+            'name': MyApp.Profile.userData.name,
+            'invertedName': MyApp.Profile.userData.lastName + " " + MyApp.Profile.userData.firstName,
+            'url': MyApp.Profile.userData.url,
         };
         return m.request ({
             method: "POST",
-            url: "_ah/api/myApi/v1/tinyUser"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
+            url: "_ah/api/myApi/v1/tinyUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
             params: data,
         })
     },
 	likeIt: function(postLiked) {
 	    var data = {
             'postLiked': postLiked,
-            'mail': MyApp.Profile.email
+            'mail': MyApp.Profile.userData.email
         };
 
 	    return m.request ({
 	 		method: "POST",
-	 		url: "_ah/api/myApi/v1/likeIt"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
+	 		url: "_ah/api/myApi/v1/likeIt"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
 	 		params: data,
 		})
 	}
@@ -454,10 +680,15 @@ MyApp.Profile = {
 MyApp.PostView = {
     view: function(vnode) {
         return m('div', [
-            m('div',{class:'subtitle'},"My Posts"),
+            m('div.mt-3.mb-3', {
+                class:'subtitle'
+            },
+                m("h3",vnode.attrs.owned?"My Posts":vnode.attrs.profile.userData.name+"'s Posts")
+            ),
             m('table', {
                 class:'table is-striped',"table":"is-striped"
             },[
+                vnode.attrs.owned?
                 m('tr', [
                     m('th', {
                         "style":"width:40vw"
@@ -474,49 +705,98 @@ MyApp.PostView = {
                     m('th', {
                         "style":"width:10vw"
                     }),
-                ]),
-                vnode.attrs.profile.list.map(function(item) {
-                return m("tr", [
-                    m('td', {
-                        "style":"width:40vw"
-                    }, m('img', {
-                            class:"profile_image",
-                            'src': item.properties.url
-                        })
-                    ),
-                    m('td', {
+                ]):
+                m('tr', [
+                    m('th', {
+                        "style":"width:50vw"
+                    }, "Post"),
+                    m('th', {
                         "style":"width:30vw"
-                    }, m('label', item.properties.body)
-                    ),
-                    m('td', {
+                    }, "Caption"),
+                    m('th', {
                         "style":"width:5vw"
-                    },
-                        m('label',
-                            item.properties.likec
-                        )
-                    ),
-                    m("td", {
-                        "style":"width:10vw"
-                    },
-                            m("button", {
-                                "class":"btn btn-success",
-                                onclick: function () {
-                                	Profile.likeIt(item.key.name);
-                                    console.log("like:"+item.key.id)
+                    }, "Likes"),
+                    m('th', {
+                        "style":"width:15vw"
+                    }),
+                ]),
+                vnode.attrs.profile.userData.postList.map(function(item) {
+                    if (vnode.attrs.owned) {
+                        return m("tr", [
+                            m('td', {
+                                "style":"width:40vw"
+                            }, m('img', {
+                                    class:"profile_image",
+                                    'src': item.properties.url
+                                })
+                            ),
+                            m('td', {
+                                "style":"width:30vw"
+                            }, m('label', item.properties.body)
+                            ),
+                            m('td', {
+                                "style":"width:5vw"
+                            },
+                                m('label',
+                                    item.properties.likec
+                                )
+                            ),
+                            m("td", {
+                                "style":"width:10vw"
+                            },
+                                    m("button", {
+                                        "class":"btn btn-success",
+                                        onclick: function () {
+                                            Profile.likeIt(item.key.name);
+                                            console.log("like:"+item.key.id)
+                                        },
                                 },
-                        },
-                        "Like your own post (weird)")
-                    ),
-                    m("td", {
-                        "style":"width:10vw"
-                    }, m("button", {
-                            "class":"btn btn-danger",
-                            onclick: function(e) {
-                                console.log("del:"+item.key.id)
-                            }
-                        },
-                    "Delete this post")),
-                ])
+                                "Like your own post (weird)")
+                            ),
+                            m("td", {
+                                "style":"width:10vw"
+                            }, m("button", {
+                                    "class":"btn btn-danger",
+                                    onclick: function(e) {
+                                        console.log("del:"+item.key.id)
+                                    }
+                                },
+                            "Delete this post")),
+                        ])
+                    } else {
+                        return m("tr", [
+                            m('td', {
+                                "style":"width:50vw"
+                            }, m('img', {
+                                    class:"profile_image",
+                                    'src': item.properties.url
+                                })
+                            ),
+                            m('td', {
+                                "style":"width:30vw"
+                            }, m('label', item.properties.body)
+                            ),
+                            m('td', {
+                                "style":"width:5vw"
+                            },
+                                m('label',
+                                    item.properties.likec
+                                )
+                            ),
+                            m("td", {
+                                "style":"width:15vw"
+                            },
+                                    m("button", {
+                                        "class":"btn btn-success float-right",
+                                        onclick: function () {
+                                            MyApp.Profile.likeIt(item.key.name);
+                                            console.log("like:"+item.key.id)
+                                        },
+                                },
+                                "Like this post")
+                            ),
+                        ])
+                    }
                 })
             ]),
             m('button',{

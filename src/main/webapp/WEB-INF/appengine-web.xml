@@ -10,6 +10,7 @@
     <include path="/**.js"/>
     <include path="/**.css"/>
     <include path="/**.ico"/>
+    <include path="/**.jpg"/>
   </static-files>
   <system-properties>
     <property name="java.util.logging.config.file" value="WEB-INF/logging.properties"/>

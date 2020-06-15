@@ -18,7 +18,7 @@
   <packaging>war</packaging>
   <version>1.0-SNAPSHOT</version>
 
-  <groupId>momo54</groupId>
+  <groupId>ValentinMatthieuLucas</groupId>
   <artifactId>WebAndCloud</artifactId>
 
   <!--
@@ -41,9 +41,8 @@
     <endpoints.management.version>1.0.12</endpoints.management.version>
 
     <checkstyle.skip>true</checkstyle.skip>
-    
-    <endpoints.project.id>essai-tinygram</endpoints.project.id>
-    <google-signin-client_id>235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com</google-signin-client_id>
+    <endpoints.project.id></endpoints.project.id>
+    <maven.version>3.0.5</maven.version>
   </properties>
 
   <dependencies>
@@ -77,15 +76,17 @@
       <artifactId>javax.inject</artifactId>
       <version>1</version>
     </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.13</version>
       <scope>test</scope>
     </dependency>
-    
-    
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>${maven.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -139,6 +140,26 @@
               <goal>display-dependency-updates</goal>
               <goal>display-plugin-updates</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.0.0-M3</version>
+        <executions>
+          <execution>
+            <id>enforce-maven</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>3.0.5</version>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
           </execution>
         </executions>
       </plugin>

@@ -68,7 +68,6 @@ var signinChanged = function (loggedIn) {
     if (auth2.isSignedIn.get()) {
         googleUser = auth2.currentUser.get();
         isLoggedIn = loggedIn;
-        console.log('Signin state changed to ', loggedIn);
         if(loggedIn) {
             MyApp.Profile.userData.name = googleUser.getBasicProfile().getName();
             MyApp.Profile.userData.email = googleUser.getBasicProfile().getEmail();
@@ -99,7 +98,6 @@ var onSuccess = function(user) {
     MyApp.Profile.userData.id = user.getAuthResponse().id_token;
     MyApp.Profile.userData.url = profile.getImageUrl();
 
-    console.log(MyApp.Profile.userData);
     isLoggedIn=true;
 
     MyApp.Profile.tinyUser();
@@ -260,33 +258,14 @@ MyApp.SearchedUsersList = {
                     },[
                         MyApp.SearchedUsersList.tinyUserList.map(function(tinyUser) {
                             return m("tr", {
-                                "style":"height:9vh",
-                                onclick: function (e) {
-                                    e.preventDefault();
-                                    $.ajax({
-                                        type: 'GET',
-                                        url: "/search",
-                                        data: {email:tinyUser.email, me:MyApp.Profile.userData.email}
-                                    }).done(function (response) {
-                                        console.log(response);
-                                        var tinyUser =response.tinyUser[0];
-                                        MyApp.User.userData = {
-                                            email:tinyUser.email,
-                                            name:tinyUser.name,
-                                            invertedName:tinyUser.invertedName,
-                                            firstName:tinyUser.firstName,
-                                            lastName:tinyUser.lastName,
-                                            url:tinyUser.url,
-                                            friend:tinyUser.friend,
-                                            nextToken:"",
-                                            postList:[],
-                                        }
-                                        m.route.set("/user");
-                                    });
-                                }
+                                "style":"height:9vh"
                             }, [
                                 m('td', {
-                                    "style":"width:10vw"
+                                    "style":"width:10vw",
+                                    onclick: function (e) {
+                                        e.preventDefault();
+                                        MyApp.SearchedUsersList.goToUser(tinyUser);
+                                    }
                                 },  m('img',
                                     {
                                         "style":"height:8vh",
@@ -296,7 +275,11 @@ MyApp.SearchedUsersList = {
                                     })
                                 ),
                                 m('td.inline', {
-                                    "style":"width:80vw"
+                                    "style":"width:80vw",
+                                    onclick: function (e) {
+                                        e.preventDefault();
+                                        MyApp.SearchedUsersList.goToUser(tinyUser);
+                                    }
                                 }, [
                                     m('h1', tinyUser.name),
                                     m('span', "("+tinyUser.email+")"),
@@ -307,7 +290,6 @@ MyApp.SearchedUsersList = {
                                     class:tinyUser.friend?"btn-danger":"btn-success",
                                     onclick: function (e) {
                                         e.preventDefault();
-                                        console.log(tinyUser.friend);
                                         if (!tinyUser.friend) {
                                             var data = {
                                                     'askingUser': MyApp.Profile.userData.email,
@@ -344,6 +326,28 @@ MyApp.SearchedUsersList = {
                 ])
             )
         )
+    },
+    goToUser: function (tinyUser) {
+        $.ajax({
+            type: 'GET',
+            url: "/search",
+            data: {email:tinyUser.email, me:MyApp.Profile.userData.email}
+        }).done(function (response) {
+            console.log(response);
+            var tinyUser =response.tinyUser[0];
+            MyApp.User.userData = {
+                email:tinyUser.email,
+                name:tinyUser.name,
+                invertedName:tinyUser.invertedName,
+                firstName:tinyUser.firstName,
+                lastName:tinyUser.lastName,
+                url:tinyUser.url,
+                friend:tinyUser.friend,
+                nextToken:"",
+                postList:[],
+            }
+            m.route.set("/user");
+        });
     }
 }
 
@@ -607,22 +611,22 @@ MyApp.Profile = {
                     m("form", {
                         onsubmit: function(e) {
                             e.preventDefault()
-                            if (url="") {url="https://dummyimage.com/320x200/000/fff&text="+Date.now()}
-                            if (body="") {body="bla bla bla \n"+Date.now()}
-                            MyApp.Profile.postMessage()
+                            if ($("#new_post_url").val()=="") var post_url="https://dummyimage.com/320x200/000/fff&text="+Date.now()
+                            if ($("#new_post_body").val()=="") var post_body="bla bla bla \n"+Date.now()
+                            MyApp.Profile.postMessage(post_url,post_body,false)
                         }},
                         [
                             m('div', {
                                 class:'field'
                             },[
-                                m("label", {class:'label'},"URL"),
+                                m("label", {
+                                    class:'label',
+                                },"URL"),
                                 m('div',{class:'control'},
                                     m("input[type=text]", {
                                         class:'input is-rounded',
                                         placeholder:"Your url",
-                                        oninput: function(e) {
-                                            MyApp.Profile.userData.url = e.target.value
-                                        }
+                                        id:"new_post_url"
                                     })
                                 ),
                             ]),
@@ -632,9 +636,7 @@ MyApp.Profile = {
                                     m("input[type=textarea]", {
                                         class:'textarea',
                                         placeholder:"your text",
-                                        oninput: function(e) {
-                                            MyApp.Profile.userData.content = e.target.value
-                                        }
+                                        id:"new_post_body"
                                     })
                                 ),
                             ]),
@@ -691,17 +693,24 @@ MyApp.Profile = {
             }
         })
     },
-    postMessage: function() {
-        var data={'url': "https://dummyimage.com/320x200/000/fff&text="+Date.now(),
-                'body': MyApp.Profile.userData.content}
-        console.log("post:"+data)
+    postMessage: function(url, body, random=true) {
+        if(random) {
+            var data= {
+                'url': "https://dummyimage.com/320x200/000/fff&text="+Date.now(),
+                'body': MyApp.Profile.userData.content
+            }
+        } else {
+            var data= {
+                'url': url,
+                'body': body
+            }
+        }
         return m.request({
             method: "POST",
             url: "_ah/api/myApi/v1/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
             params: data,
         })
         .then(function(result) {
-            console.log("post_message:",result)
             MyApp.Profile.loadList()
         })
     },

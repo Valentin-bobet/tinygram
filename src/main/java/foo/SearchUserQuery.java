@@ -66,7 +66,7 @@ public class SearchUserQuery extends HttpServlet {
 				DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
 		        Query friendQuery = new Query("Friendship").setFilter(CompositeFilterOperator.and(
 		        		new FilterPredicate("askingUser", FilterOperator.EQUAL, me),
-		        		new FilterPredicate("targetUser", FilterOperator.EQUAL, search)
+		        		new FilterPredicate("targetUser", FilterOperator.EQUAL, tinyUser.getProperty("email"))
 		        		));
 		        PreparedQuery preparedFriendQuery = datastore_2.prepare(friendQuery);
 				List<Entity> friendQueryResult = preparedFriendQuery.asList(FetchOptions.Builder.withDefaults());

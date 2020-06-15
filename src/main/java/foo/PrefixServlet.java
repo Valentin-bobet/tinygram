@@ -35,7 +35,7 @@ public class PrefixServlet extends HttpServlet {
 
 	static Random r = new Random();
 
-	
+
 	public LocalDate between(LocalDate startInclusive, LocalDate endExclusive) {
 	    long startEpochDay = startInclusive.toEpochDay();
 	    long endEpochDay = endExclusive.toEpochDay();
@@ -44,7 +44,7 @@ public class PrefixServlet extends HttpServlet {
 	    	      .nextLong(startEpochDay, endEpochDay);
 	    return LocalDate.ofEpochDay(randomDay);
 	}
-	
+
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
@@ -53,12 +53,12 @@ public class PrefixServlet extends HttpServlet {
 
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-		
+
 		LocalDate start = LocalDate.of(2019, Month.OCTOBER, 14);
 		LocalDate end = LocalDate.now();
 
-		
-		
+
+
 		// Create posts
 		for (int i = 0; i < 100; i++) {
 			for (int j=0;j<10;j++) {
@@ -81,8 +81,8 @@ public class PrefixServlet extends HttpServlet {
 					like.add("f" + r.nextInt(100));
 				}
 				e.setProperty("like", like);
-				e.setProperty("likec",like.size());
-				
+				e.setProperty("likes",like.size());
+
 				datastore.put(e);
 				response.getWriter().print("<li> created post:" + e.getKey() + "<br>" + toset + "<br>");
 			}

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ -f target/openapi-docs/openapi.json ]]
+if [[ ! -f target/openapi-docs/openapi.json ]]
 then
     echo "No openapi.json file found : getting it" && mvn endpoints-framework:openApiDocs
 fi

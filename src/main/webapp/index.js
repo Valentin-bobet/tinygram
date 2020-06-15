@@ -55,7 +55,7 @@ var googleUser; // The current user
 
 gapi.load('auth2', function() {
     auth2 = gapi.auth2.init({
-        client_id: "235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com"
+        client_id: "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com"
     });
     auth2.attachClickHandler('signin-button', {}, onSuccess, onFailure);
 
@@ -382,7 +382,7 @@ MyApp.User = {
                             m('div', {class:"col-md-4 col-sm-4 col-xs-4"},
                                 m("button.btn.float-left", {
                                     class: MyApp.User.userData.friend?"btn-danger":"btn-success",
-                            		
+
                                     onclick: function () {
                                         if(MyApp.User.userData.friend) {
                                             console.log("Unfollowed");
@@ -391,7 +391,7 @@ MyApp.User = {
                                             var data = {
                                                     'askingUser': MyApp.Profile.userData.email,
                                                     'targetUser': MyApp.User.userData.email,
-                                                };	                                        
+                                                };
                                             return m.request ({
                                                 method: "POST",
                                                 url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
@@ -615,7 +615,9 @@ MyApp.Profile = {
                         onsubmit: function(e) {
                             e.preventDefault()
                             if ($("#new_post_url").val()=="") var post_url="https://dummyimage.com/320x200/000/fff&text="+Date.now()
+                            else var post_url = $("#new_post_url").val();
                             if ($("#new_post_body").val()=="") var post_body="bla bla bla \n"+Date.now()
+                            else var post_body = $("#new_post_body").val();
                             MyApp.Profile.postMessage(post_url,post_body,false)
                         }},
                         [
@@ -807,7 +809,7 @@ MyApp.PostView = {
                                 "style":"width:5vw"
                             },
                                 m('label',
-                                    item.properties.likec
+                                    item.properties.likes
                                 )
                             ),
                             m("td", {
@@ -849,7 +851,7 @@ MyApp.PostView = {
                                 "style":"width:5vw"
                             },
                                 m('label',
-                                    item.properties.likec
+                                    item.properties.likes
                                 )
                             ),
                             m("td", {

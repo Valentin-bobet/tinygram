@@ -39,12 +39,12 @@ import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream
 
 @Api(name = "myApi",
      version = "v1",
-     audiences = "235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com",
-  	 clientIds = "235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com",
+     audiences = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
+  	 clientIds = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
-		   ownerDomain = "essai-tinygram.appspot.com",
-		   ownerName = "essai-tinygram.appspot.com",
+		   ownerDomain = "tinygram-lucas.appspot.com",
+		   ownerName = "tinygram-lucas.appspot.com",
 		   packagePath = "")
      )
 
@@ -57,7 +57,7 @@ public class ScoreEndpoint {
 		e.setProperty("owner", pm.owner);
 		e.setProperty("url", pm.url);
 		e.setProperty("body", pm.body);
-		e.setProperty("likec", 0);
+		e.setProperty("likes", 0);
 		e.setProperty("date", new Date());
 
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
@@ -75,7 +75,7 @@ public class ScoreEndpoint {
 	    // https://cloud.google.com/appengine/docs/standard/python/datastore/projectionqueries#Indexes_for_projections
 	    //q.addProjection(new PropertyProjection("body", String.class));
 	    //q.addProjection(new PropertyProjection("date", java.util.Date.class));
-	    //q.addProjection(new PropertyProjection("likec", Integer.class));
+	    //q.addProjection(new PropertyProjection("likes", Integer.class));
 	    //q.addProjection(new PropertyProjection("url", String.class));
 
 	    // looks like a good idea but...
@@ -115,7 +115,7 @@ public class ScoreEndpoint {
 		// owner is automatically projected...
 		// q.addProjection(new PropertyProjection("body", String.class));
 		// q.addProjection(new PropertyProjection("date", java.util.Date.class));
-		// q.addProjection(new PropertyProjection("likec", Integer.class));
+		// q.addProjection(new PropertyProjection("likes", Integer.class));
 		// q.addProjection(new PropertyProjection("url", String.class));
 
 		// looks like a good idea but...
@@ -154,7 +154,7 @@ public class ScoreEndpoint {
 		e.setProperty("owner", user.getEmail());
 		e.setProperty("url", pm.url);
 		e.setProperty("body", pm.body);
-		e.setProperty("likec", 0);
+		e.setProperty("likes", 0);
 		e.setProperty("date", new Date());
 
 ///		Solution pour pas projeter les listes

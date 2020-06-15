@@ -55,7 +55,7 @@ var googleUser; // The current user
 
 gapi.load('auth2', function() {
     auth2 = gapi.auth2.init({
-        client_id: "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com"
+        client_id: "235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com"
     });
     auth2.attachClickHandler('signin-button', {}, onSuccess, onFailure);
 
@@ -206,7 +206,7 @@ MyApp.searchBar = {
                                 })
                             }
                         } , "Search"),
-                    ]),
+                    ])
                 ),
                 m(MyApp.profilePicAndSignOut)
             ]);
@@ -231,7 +231,7 @@ MyApp.profilePicAndSignOut = {
                         "style":"height:42px",
                         "src":MyApp.Profile.userData.url,
                         "alt":MyApp.Profile.userData.name,
-                    }),
+                    })
                 ),
                 m(".collapse[id='collapseSignOut'].my-2.my-sm-", [
                     m("button.btn.btn-info", {
@@ -305,6 +305,7 @@ MyApp.SearchedUsersList = {
                                     "style":"width:12vw"
                                 }, m('button.btn.float-right', {
                                     class:tinyUser.friend?"btn-danger":"btn-success",
+                            		id: "btn_follow",
                                     onclick: function (e) {
                                         e.preventDefault();
                                         console.log(tinyUser.friend);
@@ -319,6 +320,7 @@ MyApp.SearchedUsersList = {
                                                 params: data,
                                             }).then(function () {
                                                 tinyUser.friend = true;
+                                                document.getElementById("btn_follow").class = "btn-danger";
                                                 console.log("Followed");
                                             })
                                         } else {
@@ -376,6 +378,7 @@ MyApp.User = {
                             m('div', {class:"col-md-4 col-sm-4 col-xs-4"},
                                 m("button.btn.float-left", {
                                     class: MyApp.User.userData.friend?"btn-danger":"btn-success",
+                            		
                                     onclick: function () {
                                         if(MyApp.User.userData.friend) {
                                             console.log("Unfollowed");
@@ -384,18 +387,18 @@ MyApp.User = {
                                             var data = {
                                                     'askingUser': MyApp.Profile.userData.email,
                                                     'targetUser': MyApp.User.userData.email,
-                                                };
+                                                };	                                        
                                             return m.request ({
                                                 method: "POST",
                                                 url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
                                                 params: data,
                                             }).then(function () {
-                                                tinyUser.friend = true;
+                                            	tinyUser.friend = true;
                                                 console.log("Followed");
                                             })
                                         }
                                     }
-                                }, MyApp.User.userData.friend?"Unfollow":"Follow"),
+                                }, MyApp.User.userData.friend?"Unfollow":"Follow")
                             ):
                             m('div', {class:"col-md-4 col-sm-4 col-xs-4"},
                                 m("span.btn.float-left", {
@@ -405,7 +408,7 @@ MyApp.User = {
                                         e.preventDefault();
                                         m.route.set("/profile")
                                     }
-                                }, "This is your public profile (click to access to your profile)"),
+                                }, "This is your public profile (click to access to your profile)")
                             ),
                         m('div', {class:"col-md-2 col-sm-2 col-xs-2"},
                             m("button", {

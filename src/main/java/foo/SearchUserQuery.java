@@ -64,7 +64,7 @@ public class SearchUserQuery extends HttpServlet {
 				usersJson += "\"url\":\""+tinyUser.getProperty("url")+"\",";
 
 				DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
-		        Query friendQuery = new Query("Friendship").setFilter(CompositeFilterOperator.and(
+		        Query friendQuery = new Query("Friendship").setFilter(CompositeFilterOperator.or(
 		        		new FilterPredicate("askingUser", FilterOperator.EQUAL, me),
 		        		new FilterPredicate("targetUser", FilterOperator.EQUAL, search)
 		        		));
@@ -113,7 +113,7 @@ public class SearchUserQuery extends HttpServlet {
 				userJson += "\"url\":\""+tinyUser.getProperty("url")+"\",";
 
 				DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
-		        Query friendQuery = new Query("Friendship").setFilter(CompositeFilterOperator.and(
+		        Query friendQuery = new Query("Friendship").setFilter(CompositeFilterOperator.or(
 		        		new FilterPredicate("askingUser", FilterOperator.EQUAL, me),
 		        		new FilterPredicate("targetUser", FilterOperator.EQUAL, email)
 		        		));

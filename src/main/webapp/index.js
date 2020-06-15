@@ -36,6 +36,11 @@ m.route(document.body, "/", {
         onmatch: function () {
             return MyApp.Login;
         }
+    },
+    "/admin": {
+        onmatch: function () {
+            return MyApp.Admin;
+        }
     }
 })
 
@@ -246,7 +251,7 @@ MyApp.SearchedUsersList = {
     tinyUserList: [],
     view: function (vnode) {
         return (
-            m("div", [
+            m("div",
                 m(MyApp.Navbar),
                 m("div.container", [
                     m('table', {
@@ -295,22 +300,49 @@ MyApp.SearchedUsersList = {
                                 }, [
                                     m('h1', tinyUser.name),
                                     m('span', "("+tinyUser.email+")"),
-
                                 ]),
                                 m('td', {
                                     "style":"width:12vw"
                                 }, m('button.btn.float-right', {
                                     class:tinyUser.friend?"btn-danger":"btn-success",
-                                    onclick: function () {
-                                        tinyUser.friend?console.log("Unfollowed"):console.log("Followed");
+                                    onclick: function (e) {
+                                        e.preventDefault();
+                                        console.log(tinyUser.friend);
+                                        if (!tinyUser.friend) {
+                                            var data = {
+                                                    'askingUser': MyApp.Profile.userData.email,
+                                                    'targetUser': tinyUser.email,
+                                                };
+                                            return m.request ({
+                                                method: "POST",
+                                                url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
+                                                params: data,
+                                            }).then(function () {
+                                                tinyUser.friend = true;
+                                                console.log("Followed");
+                                            })
+                                        } else {
+                                            console.log("Unfollowed");
+                                            /** TO DO : UNFOLLOW
+                                            var data = {
+                                                    'askingUser': MyApp.Profile.email,
+                                                    'targetUser': tinyUser.email,
+                                                };
+                                            return m.request ({
+                                                method: "POST",
+                                                url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
+                                                params: data,
+                                            }) **/
+                                        }
+
                                     }
-                                }, tinyUser.friend?"Unfollow":"Follow")
-                                ),
+                                }, tinyUser.friend?"Followed":"Follow")
+                                )
                             ])
                         })
                     ])
                 ])
-            ])
+            )
         )
     }
 }
@@ -346,12 +378,24 @@ MyApp.User = {
                                     class: MyApp.User.userData.friend?"btn-danger":"btn-success",
                                     onclick: function () {
                                         if(MyApp.User.userData.friend) {
-                                            console.log("Removed from friend");
+                                            console.log("Unfollowed");
                                         } else {
-                                            console.log("Added as friend");
+                                            console.log("Followed");
+                                            var data = {
+                                                    'askingUser': MyApp.Profile.userData.email,
+                                                    'targetUser': MyApp.User.userData.email,
+                                                };
+                                            return m.request ({
+                                                method: "POST",
+                                                url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
+                                                params: data,
+                                            }).then(function () {
+                                                tinyUser.friend = true;
+                                                console.log("Followed");
+                                            })
                                         }
                                     }
-                                }, MyApp.User.userData.friend?"Remove from friend list":"Add as friend"),
+                                }, MyApp.User.userData.friend?"Unfollow":"Follow"),
                             ):
                             m('div', {class:"col-md-4 col-sm-4 col-xs-4"},
                                 m("span.btn.float-left", {
@@ -420,7 +464,20 @@ MyApp.Timeline = {
             return m("div", [
                 m(MyApp.Navbar),
                 m("div.container", [
-                    m("h1","this is the timeline")
+                    m("h1.title","This is your timeline"),
+                    m("button.btn", {
+                        onclick: function () {
+                            console.log("Get timeline : start");
+                            $.ajax({
+                                type: 'POST',
+                                url: "/searchTimeline",
+                                data: {email:MyApp.Profile.userData.email}
+                            }).done(function (response) {
+                                console.log(response)
+                            })
+                            console.log("Get timeline : done");
+                        }
+                    }, "Get your timeline")
                 ])
             ]);
         }
@@ -819,4 +876,37 @@ MyApp.Login = {
             ])
         ])
     }
+}
+
+MyApp.Admin = {
+    view: function() {
+        return m('div',[
+            m(MyApp.Navbar),
+            m('div.container',[
+                m("button.btn.btn-success", {
+                    onclick : function () {
+                        MyApp.Profile.userData.firstName = MyApp.Admin.makeRandomName("firstName");
+                        MyApp.Profile.userData.lastName = MyApp.Admin.makeRandomName("lastName");
+                        MyApp.Profile.userData.name = MyApp.Profile.userData.firstName+" "+MyApp.Profile.userData.lastName;
+                        MyApp.Profile.userData.email = MyApp.Profile.userData.firstName+"."+MyApp.Profile.userData.lastName+"@gmail.com";
+                        MyApp.Profile.userData.url = "https://dummyimage.com/320x200/000/fff&text="+Date.now();
+
+                        console.log(MyApp.Profile.userData)
+
+                        MyApp.Profile.tinyUser();
+                    }
+                }, "Add random user")
+            ])
+        ])
+    },
+    makeRandomName: function (type) {
+        var firstNameArray = ["Adam", "Alex", "Aaron", "Ben", "Carl", "Dan", "David", "Edward", "Fred", "Frank", "George", "Hal", "Hank", "Ike", "John", "Jack", "Joe", "Larry", "Monte", "Matthew", "Mark", "Nathan", "Otto", "Paul", "Peter", "Roger", "Roger", "Steve", "Thomas", "Tim", "Ty", "Victor", "Walter"];
+        var lastNameArray = ["Anderson", "Ashwoon", "Aikin", "Bateman", "Bongard", "Bowers", "Boyd", "Cannon", "Cast", "Deitz", "Dewalt", "Ebner", "Frick", "Hancock", "Haworth", "Hesch", "Hoffman", "Kassing", "Knutson", "Lawless", "Lawicki", "Mccord", "McCormack", "Miller", "Myers", "Nugent", "Ortiz", "Orwig", "Ory", "Paiser", "Pak", "Pettigrew", "Quinn", "Quizoz", "Ramachandran", "Resnick", "Sagar", "Schickowski", "Schiebel", "Sellon", "Severson", "Shaffer", "Solberg", "Soloman", "Sonderling", "Soukup", "Soulis", "Stahl", "Sweeney", "Tandy", "Trebil", "Trusela", "Trussel", "Turco", "Uddin", "Uflan", "Ulrich", "Upson", "Vader", "Vail", "Valente", "Van Zandt", "Vanderpoel", "Ventotla", "Vogal", "Wagle", "Wagner", "Wakefield", "Weinstein", "Weiss", "Woo", "Yang", "Yates", "Yocum", "Zeaser", "Zeller", "Ziegler", "Bauer", "Baxster", "Casal", "Cataldi", "Caswell", "Celedon", "Chambers", "Chapman", "Christensen", "Darnell", "Davidson", "Davis", "DeLorenzo", "Dinkins", "Doran", "Dugelman", "Dugan", "Duffman", "Eastman", "Ferro", "Ferry", "Fletcher", "Fietzer", "Hylan", "Hydinger", "Illingsworth", "Ingram", "Irwin", "Jagtap", "Jenson", "Johnson", "Johnsen", "Jones", "Jurgenson", "Kalleg", "Kaskel", "Keller", "Leisinger", "LePage", "Lewis", "Linde", "Lulloff", "Maki", "Martin", "McGinnis", "Mills", "Moody", "Moore", "Napier", "Nelson", "Norquist", "Nuttle", "Olson", "Ostrander", "Reamer", "Reardon", "Reyes", "Rice", "Ripka", "Roberts", "Rogers", "Root", "Sandstrom", "Sawyer", "Schlicht", "Schmitt", "Schwager", "Schutz", "Schuster", "Tapia", "Thompson", "Tiernan", "Tisler" ];
+
+        if (type=="firstName") {
+            return firstNameArray[Math.floor(Math.random()*firstNameArray.length)]
+        } else {
+            return lastNameArray[Math.floor(Math.random()*firstNameArray.length)]
+        }
+     }
 }

@@ -39,12 +39,12 @@ import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream
 
 @Api(name = "myApi",
      version = "v1",
-     audiences = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
-  	 clientIds = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
+     audiences = "235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com",
+  	 clientIds = "235217082902-bbqlm3p82o9d9q8sqnlssekthjt3k77q.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
-		   ownerDomain = "tinygram-lucas.appspot.com",
-		   ownerName = "tinygram-lucas.appspot.com",
+		   ownerDomain = "essai-tinygram.appspot.com",
+		   ownerName = "essai-tinygram.appspot.com",
 		   packagePath = "")
      )
 
@@ -286,4 +286,25 @@ public class ScoreEndpoint {
 		}
 		return null;
 	}
+	
+	
+	@ApiMethod(name= "Frienship", httpMethod = HttpMethod.POST)
+	public Entity Friendship(Friendship f) throws UnauthorizedException {
+
+		if (f == null) {
+			throw new UnauthorizedException("Invalid credentials");
+		}
+		
+		Entity e = new Entity("Friendship");
+		e.setProperty("askingUser", f.getAskingUser());
+		e.setProperty("targetUser", f.getTargetUser());
+
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Transaction txn = datastore.beginTransaction();
+		datastore.put(e);
+		txn.commit();
+		return e;
+	}
+	
+	
 }

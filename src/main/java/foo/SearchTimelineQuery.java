@@ -21,6 +21,7 @@ import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.CompositeFilter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
+import com.google.appengine.api.datastore.Query.SortDirection;
 
 @WebServlet(name = "SearchTimelineQuery", urlPatterns = { "/searchTimeline" })
 public class SearchTimelineQuery extends HttpServlet {
@@ -48,40 +49,39 @@ public class SearchTimelineQuery extends HttpServlet {
 		String postsJson="{}";
         int users_count=1;
 		if(!friendsQueryResult.isEmpty()) {
-            postsJson = "{\"tinyUsers\": [";
 			for (Entity friendship : friendsQueryResult) {
                 Query userQuery = new Query("tinyUser").setFilter(new FilterPredicate("email", FilterOperator.EQUAL, friendship.getProperty("targetUser")));
                 PreparedQuery preparedUserQuery = datastore.prepare(userQuery);
                 Entity tinyUser = preparedUserQuery.asSingleEntity();
 
-                postsJson += "{";
-                postsJson += "\"email\":\""+tinyUser.getProperty("email")+"\",";
-                postsJson += "\"name\":\""+tinyUser.getProperty("name")+"\",";
-                postsJson += "\"url\":\""+tinyUser.getProperty("url")+"\"";
-
                 Query postQuery = new Query("Post").setFilter(new FilterPredicate("owner", FilterOperator.EQUAL, friendship.getProperty("targetUser")));
+                postQuery.addSort("date", SortDirection.DESCENDING);
                 PreparedQuery preparedPostQuery = datastore.prepare(postQuery);
-                List<Entity> postsQueryResult = preparedPostQuery.asList(FetchOptions.Builder.withDefaults());
+                List<Entity> postsQueryResult = preparedPostQuery.asList(FetchOptions.Builder.withLimit(5));
                 int posts_count=1;
                 if(!postsQueryResult.isEmpty()) {
-                    postsJson += ",\"posts\": [";
+                    postsJson = "{\"posts\": [";
                     for(Entity post : postsQueryResult) {
                         postsJson += "{";
+                        postsJson += "\"tinyUser\":";
+                        postsJson += "{";
+                        postsJson += "\"email\":\""+tinyUser.getProperty("email")+"\",";
+                        postsJson += "\"name\":\""+tinyUser.getProperty("name")+"\",";
+                        postsJson += "\"url\":\""+tinyUser.getProperty("url")+"\"";
+                        postsJson += "},";
                         postsJson += "\"url\":\""+post.getProperty("url")+"\",";
                         postsJson += "\"body\":\""+post.getProperty("body")+"\",";
                         postsJson += "\"date\":\""+post.getProperty("date")+"\",";
+                        postsJson += "\"key\":\""+post.getProperty("key")+"\",";
                         postsJson += "\"likes\":"+post.getProperty("likes");
                         postsJson += "}";
                         if(posts_count != postsQueryResult.size()) postsJson += ",";
                         posts_count++;
                     }
                     postsJson += "]";
+                    postsJson += "}";
                 }
-                postsJson += "}";
-				if(users_count != friendsQueryResult.size()) postsJson += ",";
-				users_count++;
             }
-            postsJson += "]}";
         }
 		out.print(postsJson);
         out.flush();

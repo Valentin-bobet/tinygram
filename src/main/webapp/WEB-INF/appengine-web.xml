@@ -11,6 +11,7 @@
     <include path="/**.css"/>
     <include path="/**.ico"/>
     <include path="/**.jpg"/>
+    <include path="/**.gif"/>
   </static-files>
   <system-properties>
     <property name="java.util.logging.config.file" value="WEB-INF/logging.properties"/>

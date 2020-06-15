@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]; then
+    echo -e "Too few arguments called \nUsage : bash continuous-run refresh_timing ( preferably > 60)"
+else
+    i=1;
+    while true;
+    do
+        echo -e "\n\n\n------------------------------------------------"
+        echo "|      mvn:appengine run for the $i th time   "
+        echo -n "|     "; date
+        echo -e "-------------------------------------------------------\n\n\n"
+        mvn install && mvn appengine:deploy
+        sleep $1
+        i=$((i+1))
+    done
+fi

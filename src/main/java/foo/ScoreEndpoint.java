@@ -236,7 +236,7 @@ public class ScoreEndpoint {
 	}
 
 
-	@ApiMethod(name= "Frienship", httpMethod = HttpMethod.POST)
+	@ApiMethod(name= "Friendship", httpMethod = HttpMethod.POST)
 	public Entity Friendship(Friendship f) throws UnauthorizedException {
 
 		if (f == null) {

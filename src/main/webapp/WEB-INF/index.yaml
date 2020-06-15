@@ -5,3 +5,8 @@ indexes:
       direction: asc
     - name: targetUser
       direction: asc
+- kind: Post
+  properties:
+  - name: owner
+  - name: date
+    direction: desc

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]; then
+    echo -e "Too few arguments called \nUsage : bash update-config google-signin-client_id"
+else
+    echo "Replacing endpoints.project.id in pom.xml by $1 :"
+    sed -i "s/<endpoints.project.id>.*<\/endpoints.project.id>/<endpoints.project.id>$1<\/endpoints.project.id>/" pom.xml
+    echo "OK"
+
+    echo "Replacing google sign in client id in src/main/webapp/index.js by $2 :"
+    sed -i "s/client_id: \".*\"/client_id: \"$2\"/" src/main/webapp/index.js
+    echo "OK"
+
+    echo "Replacing google sign in client id in src/main/webapp/index.js by $2 :"
+    sed -i "s/client_id: \".*\"/client_id: \"$2\"/" src/main/webapp/index.js
+    echo "OK"
+
+    echo "Replacing project url and google sign in client id in src/main/java/foo/ScoreEndpoint.java by $2 :"
+    sed -i "s/audiences = \".*\",/audiences = \"$2\",/" src/main/java/foo/ScoreEndpoint.java
+    sed -i "s/clientIds = \".*\",/clientIds = \"$2\",/" src/main/java/foo/ScoreEndpoint.java
+    sed -i "s/ownerDomain = \".*.appspot.com\",/ownerDomain = \"$1.appspot.com\",/" src/main/java/foo/ScoreEndpoint.java
+    sed -i "s/ownerName = \".*.appspot.com\",/ownerName = \"$1.appspot.com\",/" src/main/java/foo/ScoreEndpoint.java
+    echo "OK"
+fi

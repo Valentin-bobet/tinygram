@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [[ -f target/openapi-docs/openapi.json ]]
+then
+    echo "No openapi.json file found : getting it" && mvn endpoints-framework:openApiDocs
+fi
+
+mvn install && gcloud endpoints services deploy target/openapi-docs/openapi.json

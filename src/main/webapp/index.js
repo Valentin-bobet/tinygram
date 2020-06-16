@@ -348,7 +348,7 @@ MyApp.SearchedUsersList = {
                                                     };
                                                 return m.request ({
                                                     method: "POST",
-                                                    url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
+                                                    url: "_ah/api/user_api/v1/followUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
                                                     params: data,
                                                 }).then(function () {
                                                     tinyUser.friend = true;
@@ -894,7 +894,7 @@ MyApp.Profile = {
 
 	    return m.request ({
 	 		method: "POST",
-	 		url: "_ah/api/myApi/v1/likeIt"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+	 		url: "_ah/api/like_api/v1/newLike"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
 	 		params: data,
 		})
 	}

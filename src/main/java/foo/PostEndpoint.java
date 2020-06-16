@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.google.api.server.spi.auth.common.User;
@@ -40,12 +41,12 @@ import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream
 
 @Api(name = "post_api",
      version = "v1",
-     audiences = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
-  	 clientIds = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
+     audiences = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
+  	 clientIds = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
-		   ownerDomain = "tinygram-lucas.appspot.com",
-		   ownerName = "tinygram-lucas.appspot.com",
+		   ownerDomain = "simple-basique-basique-simple.appspot.com",
+		   ownerName = "simple-basique-basique-simple.appspot.com",
 		   packagePath = "")
      )
 public class PostEndpoint {
@@ -82,21 +83,31 @@ public class PostEndpoint {
 			throw new UnauthorizedException("Invalid credentials");
 		}
 
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		
+		Query q = new Query("tinyUser").setFilter(new FilterPredicate("email", FilterOperator.EQUAL, user.getEmail()));
+		PreparedQuery pq = datastore.prepare(q);
+		Entity searchQueryResult = pq.asSingleEntity();
+		
+		List<String> recievers = new ArrayList<>();
+		recievers = (List<String>)searchQueryResult.getProperty("followers");
+		
 		Entity e = new Entity("Post", Long.MAX_VALUE-(new Date()).getTime()+":"+user.getEmail());
 		e.setProperty("owner", user.getEmail());
 		e.setProperty("url", pm.url);
 		e.setProperty("body", pm.body);
 		e.setProperty("likes", 0);
 		e.setProperty("date", new Date());
+		e.setProperty("recievers", recievers);
 
 ///		Solution pour pas projeter les listes
 //		Entity pi = new Entity("PostIndex", e.getKey());
 //		HashSet<String> rec=new HashSet<String>();
 //		pi.setProperty("receivers",rec);
 
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Transaction txn = datastore.beginTransaction();
-		datastore.put(e);
+		DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
+		Transaction txn = datastore_2.beginTransaction();
+		datastore_2.put(e);
 //		datastore.put(pi);
 		txn.commit();
 		return e;

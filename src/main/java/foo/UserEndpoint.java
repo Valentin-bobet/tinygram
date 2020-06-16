@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.google.api.server.spi.auth.common.User;
@@ -22,6 +23,7 @@ import com.google.appengine.api.datastore.Cursor;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.Query;
@@ -40,12 +42,12 @@ import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream
 
 @Api(name = "user_api",
      version = "v1",
-     audiences = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
-  	 clientIds = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
+     audiences = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
+  	 clientIds = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
-		   ownerDomain = "tinygram-lucas.appspot.com",
-		   ownerName = "tinygram-lucas.appspot.com",
+		   ownerDomain = "simple-basique-basique-simple.appspot.com",
+		   ownerName = "simple-basique-basique-simple.appspot.com",
 		   packagePath = "")
      )
 public class UserEndpoint {
@@ -127,6 +129,10 @@ public class UserEndpoint {
 			e.setProperty("firstName", tinyUser.firstName);
 			e.setProperty("lastName", tinyUser.lastName);
 			e.setProperty("url", tinyUser.url);
+			
+			List<String> followers = new ArrayList<>();
+			followers.add(user.getEmail());
+			e.setProperty("followers", followers);
 
 			DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
 			Transaction txn = datastore_2.beginTransaction();
@@ -135,5 +141,34 @@ public class UserEndpoint {
 			return e;
 		}
 		return null;
+	}
+    
+	@ApiMethod(name= "followUser",path= "followUser", httpMethod = HttpMethod.POST)
+	public Entity Friendship(User u,Friendship tu) throws UnauthorizedException, EntityNotFoundException {
+
+		if (u == null) {
+			throw new UnauthorizedException("Invalid credentials");
+		}
+
+	    Query searchQuery = new Query("tinyUser").setFilter(new FilterPredicate("email", FilterOperator.EQUAL, tu.getTargetUser()));
+	    
+	    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+	    
+	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
+
+		Entity e = preparedSearchQuery.asSingleEntity();
+		
+		List<String> followers = new ArrayList<>();
+		followers = (List<String>)e.getProperty("followers");				
+		
+		followers.add(u.getEmail());
+		
+		e.setProperty("followers", followers);
+				
+		Transaction txn = datastore.beginTransaction();
+		datastore.put(e);
+		txn.commit();
+		return e;
+
 	}
 }

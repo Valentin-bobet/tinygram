@@ -40,12 +40,12 @@ import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream
 
 @Api(name = "like_api",
      version = "v1",
-     audiences = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
-  	 clientIds = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
+     audiences = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
+  	 clientIds = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
-		   ownerDomain = "tinygram-lucas.appspot.com",
-		   ownerName = "tinygram-lucas.appspot.com",
+		   ownerDomain = "simple-basique-basique-simple.appspot.com",
+		   ownerName = "simple-basique-basique-simple.appspot.com",
 		   packagePath = "")
      )
 public class LikeEndpoint {

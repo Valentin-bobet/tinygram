@@ -198,6 +198,43 @@ MyApp.Searchbar = {
         }
     },
     searchUser: function () {
+        m.request({
+            method: "GET",
+            params: {
+                'email': MyApp.Profile.userData.email,
+                'search':$("#search").val(),
+            },
+            url: "_ah/api/user_api/v1/getSearchUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+        })
+        .then(function(response) {
+            console.log("users:",response)
+            var i = 0;
+            var tinyUser = {};
+            response.items.forEach(item => {
+                tinyUser=item.properties
+                MyApp.SearchedUsersList.tinyUserList[i] = {
+                    email:tinyUser.email,
+                    name:tinyUser.name,
+                    invertedName:tinyUser.invertedName,
+                    firstName:tinyUser.firstName,
+                    lastName:tinyUser.lastName,
+                    url:tinyUser.url,
+                    friend:tinyUser.friend,
+                }
+                i++;
+            });
+            m.route.set("/search");
+
+            /*
+            MyApp.User.userData.postList=result.items
+            if ('nextPageToken' in result) {
+                MyApp.User.userData.nextToken= result.nextPageToken
+            } else {
+                MyApp.User.userData.nextToken=""
+            }*/
+        })
+
+        /**
         $.ajax({
             type: 'POST',
             url: $("#searchForm").attr('action'),
@@ -221,6 +258,7 @@ MyApp.Searchbar = {
             }
             m.route.set("/search");
         })
+        */
     }
 }
 
@@ -340,13 +378,17 @@ MyApp.SearchedUsersList = {
         )
     },
     goToUser: function (tinyUser) {
-        $.ajax({
-            type: 'GET',
-            url: "/search",
-            data: {email:tinyUser.email, me:MyApp.Profile.userData.email}
-        }).done(function (response) {
+
+        m.request({
+            method: "GET",
+            params: {
+                'email': tinyUser.email,
+            },
+            url: "_ah/api/user_api/v1/getUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+        })
+        .then(function (response) {
             console.log(response);
-            var tinyUser =response.tinyUser[0];
+            var tinyUser = response.properties;
             MyApp.User.userData = {
                 email:tinyUser.email,
                 name:tinyUser.name,
@@ -354,7 +396,6 @@ MyApp.SearchedUsersList = {
                 firstName:tinyUser.firstName,
                 lastName:tinyUser.lastName,
                 url:tinyUser.url,
-                friend:tinyUser.friend,
                 nextToken:"",
                 postList:[],
             }
@@ -581,7 +622,9 @@ MyApp.Timeline = {
         $.ajax({
             type: 'POST',
             url: "/searchTimeline",
-            data: {email:MyApp.Profile.userData.email}
+            data: {
+                email:MyApp.Profile.userData.email
+            }
         }).then(function (response) {
             showTimeline = true;
             MyApp.Timeline.loading_gif = false;
@@ -929,13 +972,27 @@ MyApp.PostView = {
                             ),
                             m("td", {
                                 "style":"width:10vw"
-                            }, m("button", {
-                                    "class":"btn btn-danger",
-                                    onclick: function(e) {
-                                        console.log("del:"+item.key.id)
-                                    }
-                                },
-                            "Delete this post")),
+                            },
+	                            m("button", {
+	                                  "class":"btn btn-danger",
+	                                  onclick: function() {
+	                                	  var data = {
+	                                			  'entity':item.key.kind,
+	                                			  'id': item.key.name
+	                                	  };
+
+	                                	  return m.request ({
+	                                		  method: "POST",
+	                                		  url: "_ah/api/myApi/v1/Delete"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+	                                		  params: data,
+	                                	  }).then(function(result) {
+	                                          console.log("delete finish")
+	                                      })
+	                                   },
+
+	                            	},
+	                            "Delete this post")
+                            )
                         ])
                     } else {
                         return m("tr", [

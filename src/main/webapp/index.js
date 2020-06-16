@@ -151,7 +151,7 @@ MyApp.Navbar = {
                         )
                     )
                 ]),
-                m(MyApp.searchBar)
+                m(MyApp.Searchbar)
             ])
         ]));
     },
@@ -168,7 +168,7 @@ MyApp.signInButton = {
     }
 }
 
-MyApp.searchBar = {
+MyApp.Searchbar = {
     view: function () {
         if(MyApp.Profile.userData.id!="") {
             return m("div.form-inline", [
@@ -181,27 +181,7 @@ MyApp.searchBar = {
                         m("button.btn.btn-outline-success.my-2.my-sm-0.mr-2[type='submit']",{
                             onclick: function (e) {
                                 e.preventDefault();
-                                $.ajax({
-                                    type: 'POST',
-                                    url: $("#searchForm").attr('action'),
-                                    data: $("#searchForm").serialize()
-                                }).done(function (response) {
-                                    showSearchList = true;
-                                    var i = 0;
-                                    response.tinyUser.forEach(tinyUser => {
-                                        MyApp.SearchedUsersList.tinyUserList[i] = {
-                                            email:tinyUser.email,
-                                            name:tinyUser.name,
-                                            invertedName:tinyUser.invertedName,
-                                            firstName:tinyUser.firstName,
-                                            lastName:tinyUser.lastName,
-                                            url:tinyUser.url,
-                                            friend:tinyUser.friend,
-                                        }
-                                        i++;
-                                    });
-                                    m.route.set("/search");
-                                })
+                                MyApp.Searchbar.searchUser();
                             }
                         } , "Search"),
                     ])
@@ -216,6 +196,35 @@ MyApp.searchBar = {
                 ])
             );
         }
+    },
+    searchUser: function () {
+        m.request({
+            method: "GET",
+            params: {
+                'email': MyApp.Profile.userData.email,
+                'search':$("#search").val(),
+            },
+            url: "_ah/api/user_api/v1/getSearchUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+        })
+        .then(function(response) {
+            console.log("users:",response)
+            var i = 0;
+            var tinyUser = {};
+            response.items.forEach(item => {
+                tinyUser=item.properties
+                MyApp.SearchedUsersList.tinyUserList[i] = {
+                    email:tinyUser.email,
+                    name:tinyUser.name,
+                    invertedName:tinyUser.invertedName,
+                    firstName:tinyUser.firstName,
+                    lastName:tinyUser.lastName,
+                    url:tinyUser.url,
+                    friend:tinyUser.friend,
+                }
+                i++;
+            });
+            m.route.set("/search");
+        })
     }
 }
 
@@ -251,93 +260,141 @@ MyApp.SearchedUsersList = {
         return (
             m("div",
                 m(MyApp.Navbar),
-                m("div.container", [
-                    m('table', {
-                        class:'table is-striped',
-                        "table":"is-striped"
-                    },[
-                        MyApp.SearchedUsersList.tinyUserList.map(function(tinyUser) {
-                            return m("tr", {
-                                "style":"height:9vh"
-                            }, [
-                                m('td', {
-                                    "style":"width:10vw",
-                                    onclick: function (e) {
-                                        e.preventDefault();
-                                        MyApp.SearchedUsersList.goToUser(tinyUser);
-                                    }
-                                },  m('img',
-                                    {
-                                        "style":"height:8vh",
-                                        class:"profile_image",
-                                        'src': tinyUser.url,
-                                        'alt':tinyUser.name,
-                                    })
-                                ),
-                                m('td.inline', {
-                                    "style":"width:80vw",
-                                    onclick: function (e) {
-                                        e.preventDefault();
-                                        MyApp.SearchedUsersList.goToUser(tinyUser);
-                                    }
+                MyApp.SearchedUsersList.tinyUserList.length != 0 ?
+                    m("div.container", [
+                        m('table', {
+                            class:'table is-striped',
+                            "table":"is-striped"
+                        },[
+                            MyApp.SearchedUsersList.tinyUserList.map(function(tinyUser) {
+                                return m("tr", {
+                                    "style":"height:9vh"
                                 }, [
-                                    m('h1', tinyUser.name),
-                                    m('span', "("+tinyUser.email+")"),
-                                ]),
-                                m('td', {
-                                    "style":"width:12vw"
-                                }, m('button.btn.float-right', {
-                                    class:tinyUser.followers.contains(MyApp.Profile.userData.email)?"btn-danger":"btn-success",
-                            		id: "btn_follow",
-                                    onclick: function (e) {
-                                        e.preventDefault();
-                                        if (!tinyUser.friend) {
-                                            var data = {
-                                                    'askingUser': MyApp.Profile.userData.email,
-                                                    'targetUser': tinyUser.email,
-                                                };
-                                            console.log(MyApp.Profile.userData.email+' et '+tinyUser.email);
-                                            return m.request ({
-                                                method: "POST",
-                                                url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
-                                                params: data,
-                                            }).then(function () {
-                                                tinyUser.friend = true;
-                                                document.getElementById("btn_follow").class = "btn-danger";
-                                                console.log("Followed");
-                                            })
-                                        } else {
-                                            console.log("Unfollowed");
-                                            /** TO DO : UNFOLLOW
-                                            var data = {
-                                                    'askingUser': MyApp.Profile.email,
-                                                    'targetUser': tinyUser.email,
-                                                };
-                                            return m.request ({
-                                                method: "POST",
-                                                url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
-                                                params: data,
-                                            }) **/
+//<<<<<<< HEAD
+//                                    m('h1', tinyUser.name),
+//                                    m('span', "("+tinyUser.email+")"),
+//                                ]),
+//                                m('td', {
+//                                    "style":"width:12vw"
+//                                }, m('button.btn.float-right', {
+//                                    class:tinyUser.followers.contains(MyApp.Profile.userData.email)?"btn-danger":"btn-success",
+//                            		id: "btn_follow",
+//                                    onclick: function (e) {
+//                                        e.preventDefault();
+//                                        if (!tinyUser.friend) {
+//                                            var data = {
+//                                                    'askingUser': MyApp.Profile.userData.email,
+//                                                    'targetUser': tinyUser.email,
+//                                                };
+//                                            console.log(MyApp.Profile.userData.email+' et '+tinyUser.email);
+//                                            return m.request ({
+//                                                method: "POST",
+//                                                url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+//                                                params: data,
+//                                            }).then(function () {
+//                                                tinyUser.friend = true;
+//                                                document.getElementById("btn_follow").class = "btn-danger";
+//                                                console.log("Followed");
+//                                            })
+//                                        } else {
+//                                            console.log("Unfollowed");
+//                                            /** TO DO : UNFOLLOW
+//                                            var data = {
+//                                                    'askingUser': MyApp.Profile.email,
+//                                                    'targetUser': tinyUser.email,
+//                                                };
+//                                            return m.request ({
+//                                                method: "POST",
+//                                                url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
+//                                                params: data,
+//                                            }) **/
+//=======
+                                    m('td', {
+                                        "style":"width:10vw",
+                                        onclick: function (e) {
+                                            e.preventDefault();
+                                            MyApp.SearchedUsersList.goToUser(tinyUser);
+//>>>>>>> 63432560beda2701366eb5591a16d9d59a77a4cc
                                         }
+                                    },  m('img',
+                                        {
+                                            "style":"height:8vh",
+                                            class:"profile_image",
+                                            'src': tinyUser.url,
+                                            'alt':tinyUser.name,
+                                        })
+                                    ),
+                                    m('td.inline', {
+                                        "style":"width:80vw",
+                                        onclick: function (e) {
+                                            e.preventDefault();
+                                            MyApp.SearchedUsersList.goToUser(tinyUser);
+                                        }
+                                    }, [
+                                        m('h1', tinyUser.name),
+                                        m('span', "("+tinyUser.email+")"),
+                                    ]),
+                                    m('td', {
+                                        "style":"width:12vw"
+                                    }, m('button.btn.float-right', {
+                                        class:tinyUser.friend?"btn-danger":"btn-success",
+                                        id: "btn_follow",
+                                        onclick: function (e) {
+                                            e.preventDefault();
+                                            if (!tinyUser.friend) {
+                                                var data = {
+                                                        'askingUser': MyApp.Profile.userData.email,
+                                                        'targetUser': tinyUser.email,
+                                                    };
+                                                return m.request ({
+                                                    method: "POST",
+                                                    url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
+                                                    params: data,
+                                                }).then(function () {
+                                                    tinyUser.friend = true;
+                                                    document.getElementById("btn_follow").class = "btn-danger";
+                                                    console.log("Followed");
+                                                })
+                                            } else {
+                                                console.log("Unfollowed");
+                                                /** TO DO : UNFOLLOW
+                                                var data = {
+                                                        'askingUser': MyApp.Profile.email,
+                                                        'targetUser': tinyUser.email,
+                                                    };
+                                                return m.request ({
+                                                    method: "POST",
+                                                    url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
+                                                    params: data,
+                                                }) **/
+                                            }
 
-                                    }
-                                }, tinyUser.friend?"Followed":"Follow")
-                                )
-                            ])
-                        })
+                                        }
+                                    }, tinyUser.friend?"Followed":"Follow")
+                                    )
+                                ])
+                            })
+                        ])
                     ])
-                ])
+                    :
+                    m("div.container",
+                        m("h1.title", "No user found for your search...")
+                    )
             )
         )
     },
     goToUser: function (tinyUser) {
-        $.ajax({
-            type: 'GET',
-            url: "/search",
-            data: {email:tinyUser.email, me:MyApp.Profile.userData.email}
-        }).done(function (response) {
+
+        m.request({
+            method: "GET",
+            params: {
+                'email': tinyUser.email,
+            },
+            url: "_ah/api/user_api/v1/getUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+        })
+        .then(function (response) {
             console.log(response);
-            var tinyUser =response.tinyUser[0];
+            var tinyUser = response.properties;
             MyApp.User.userData = {
                 email:tinyUser.email,
                 name:tinyUser.name,
@@ -345,7 +402,6 @@ MyApp.SearchedUsersList = {
                 firstName:tinyUser.firstName,
                 lastName:tinyUser.lastName,
                 url:tinyUser.url,
-                friend:tinyUser.friend,
                 nextToken:"",
                 postList:[],
             }
@@ -432,7 +488,7 @@ MyApp.User = {
     loadList: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
+            url: "_ah/api/post_api/v1/getPost"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
         })
         .then(function(result) {
             console.log("load_list:",result)
@@ -447,7 +503,7 @@ MyApp.User = {
     next: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/myApi/v1/collectionresponse_entity",
+            url: "_ah/api/post_api/v1/getPost",
             params: {
                 'next':MyApp.User.userData.nextToken,
                 'access_token': encodeURIComponent(MyApp.Profile.userData.id)
@@ -466,6 +522,8 @@ MyApp.User = {
 }
 
 MyApp.Timeline = {
+    posts: [],
+    loading_gif: false,
     view: function () {
         if (MyApp.Profile.userData.id == "") return m(MyApp.NotSignedIn);
         else {
@@ -473,22 +531,115 @@ MyApp.Timeline = {
                 m(MyApp.Navbar),
                 m("div.container", [
                     m("h1.title","This is your timeline"),
-                    m("button.btn", {
+                    m("button.btn.mb-5", {
                         onclick: function () {
-                            console.log("Get timeline : start");
-                            $.ajax({
-                                type: 'POST',
-                                url: "/searchTimeline",
-                                data: {email:MyApp.Profile.userData.email}
-                            }).done(function (response) {
-                                console.log(response)
-                            })
-                            console.log("Get timeline : done");
+                            MyApp.Timeline.getTimeline();
                         }
-                    }, "Get your timeline")
+                    }, "Get your timeline"),
+                        MyApp.Timeline.loading_gif?
+                            m("div",
+                                m("img", {
+                                    "style":"text-center",
+                                    "src":"static/images/loading.gif",
+                                    "alt":"Loading..."
+                                })
+                            )
+                            :
+                            MyApp.Timeline.posts.length==0?
+                                m("div",
+                                    m("span", "No new post to show")
+                                ):
+                                m('table', {
+                                    class:'table is-striped',"table":"is-striped"
+                                },[
+                                    m('tr', [
+                                        m('th', {
+                                            "style":"width:20vw"
+                                        }, ""),
+                                        m('th', {
+                                            "style":"width:40vw"
+                                        }, "Post"),
+                                        m('th', {
+                                            "style":"width:25vw"
+                                        }, "Caption"),
+                                        m('th', {
+                                            "style":"width:5vw"
+                                        }, "Likes"),
+                                        m('th', {
+                                            "style":"width:10vw"
+                                        }),
+                                    ]),
+                                    MyApp.Timeline.posts.map(function(post) {
+                                        return m("tr", [
+                                            m('td', {
+                                                "style":"width:20vw",
+                                                onclick: function () {
+                                                    MyApp.SearchedUsersList.goToUser(post.tinyUser);
+                                                }
+                                            }, [
+                                                m("h1", post.tinyUser.name),
+                                                m("h2", post.tinyUser.email),
+                                                m('img', {
+                                                    class:"profile_image",
+                                                    'src': post.tinyUser.url
+                                                })
+                                            ]),
+                                            m('td', {
+                                                "style":"width:40vw"
+                                            }, m('img', {
+                                                    'src': post.url
+                                                })
+                                            ),
+                                            m('td', {
+                                                "style":"width:25vw"
+                                            }, m('label', post.body)
+                                            ),
+                                            m('td', {
+                                                "style":"width:5vw"
+                                            },
+                                                m('label',
+                                                    post.likes
+                                                )
+                                            ),
+                                            m("td", {
+                                                "style":"width:10vw"
+                                            },
+                                                    m("button", {
+                                                        "class":"btn btn-success",
+                                                        onclick: function () {
+                                                            MyApp.Profile.likeIt(post.key.name);
+                                                            console.log("like:"+post.key.id)
+                                                        },
+                                                },
+                                                "Like")
+                                            )
+                                        ])
+
+                                    })
+                                ])
+
                 ])
             ]);
         }
+    },
+    getTimeline : function () {
+        console.log("Get timeline : start");
+        MyApp.Timeline.loading_gif = true;
+        $.ajax({
+            type: 'POST',
+            url: "/searchTimeline",
+            data: {
+                email:MyApp.Profile.userData.email
+            }
+        }).then(function (response) {
+            showTimeline = true;
+            MyApp.Timeline.loading_gif = false;
+            console.log(typeof response.posts);
+            (typeof response.posts !== "undefined") ? MyApp.Timeline.posts = response.posts : MyApp.Timeline.posts = [];
+            console.log(MyApp.Timeline.posts)
+            console.log("Get timeline : done");
+            m.route.set("/home");
+        })
     }
 }
 
@@ -583,7 +734,7 @@ MyApp.Profile = {
     view: function(){
         return m('div',[
             m(MyApp.Navbar),
-            m('div', {class:'container'},[
+            m('div', {class:'container mt-5'},[
                 m('div', {class:"row"},[
                     m('div', {class:"col-md-2 col-sm-2 col-xs-2"},
                         m("img", {
@@ -668,7 +819,7 @@ MyApp.Profile = {
     loadList: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
+            url: "_ah/api/post_api/v1/getPost"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
         })
         .then(function(result) {
             console.log("load_list:",result)
@@ -683,7 +834,7 @@ MyApp.Profile = {
     next: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/myApi/v1/collectionresponse_entity",
+            url: "_ah/api/post_api/v1/getPost",
             params: {
                 'next':MyApp.Profile.userData.nextToken,
                 'access_token': encodeURIComponent(MyApp.Profile.userData.id)
@@ -713,7 +864,7 @@ MyApp.Profile = {
         }
         return m.request({
             method: "POST",
-            url: "_ah/api/myApi/v1/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            url: "_ah/api/post_api/v1/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
             params: data,
         })
         .then(function(result) {
@@ -731,7 +882,7 @@ MyApp.Profile = {
         };
         return m.request ({
             method: "POST",
-            url: "_ah/api/myApi/v1/tinyUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            url: "_ah/api/user_api/v1/createUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
             params: data,
         })
     },
@@ -793,6 +944,7 @@ MyApp.PostView = {
                     }),
                 ]),
                 vnode.attrs.profile.userData.postList.map(function(item) {
+                    console.log(item);
                     if (vnode.attrs.owned) {
                         return m("tr", [
                             m('td', {
@@ -827,13 +979,26 @@ MyApp.PostView = {
                             ),
                             m("td", {
                                 "style":"width:10vw"
-                            }, m("button", {
-                                    "class":"btn btn-danger",
-                                    onclick: function(e) {
-                                        console.log("del:"+item.key.id)
-                                    }
-                                },
-                            "Delete this post")),
+                            },
+	                            m("button", {
+	                                  "class":"btn btn-danger",
+	                                  onclick: function() {
+	                                	  var data = {
+                                                'entity':item.key.kind,
+                                                'id': item.key.name
+	                                	  };
+	                                	  return m.request ({
+                                                method: "POST",
+                                                url: "_ah/api/myApi/v1/Delete"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+                                                params: data,
+	                                	  }).then(function(result) {
+                                                m.route.set("/profile");
+	                                      })
+	                                   },
+
+	                            	},
+	                            "Delete this post")
+                            )
                         ])
                     } else {
                         return m("tr", [

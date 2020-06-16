@@ -1,6 +1,12 @@
 indexes:
-- kind: Friend 
-  properties: 
-    - name: friends 
-    - name: age 
-    
+- kind: Friendship
+  properties:
+    - name: askingUser
+      direction: asc
+    - name: targetUser
+      direction: asc
+- kind: Post
+  properties:
+  - name: owner
+  - name: date
+    direction: desc

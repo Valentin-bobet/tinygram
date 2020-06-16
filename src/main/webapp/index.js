@@ -55,7 +55,7 @@ var googleUser; // The current user
 
 gapi.load('auth2', function() {
     auth2 = gapi.auth2.init({
-        client_id: "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com"
+        client_id: "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com"
     });
     auth2.attachClickHandler('signin-button', {}, onSuccess, onFailure);
 
@@ -287,7 +287,7 @@ MyApp.SearchedUsersList = {
                                 m('td', {
                                     "style":"width:12vw"
                                 }, m('button.btn.float-right', {
-                                    class:tinyUser.friend?"btn-danger":"btn-success",
+                                    class:tinyUser.followers.contains(MyApp.Profile.userData.email)?"btn-danger":"btn-success",
                             		id: "btn_follow",
                                     onclick: function (e) {
                                         e.preventDefault();
@@ -296,9 +296,10 @@ MyApp.SearchedUsersList = {
                                                     'askingUser': MyApp.Profile.userData.email,
                                                     'targetUser': tinyUser.email,
                                                 };
+                                            console.log(MyApp.Profile.userData.email+' et '+tinyUser.email);
                                             return m.request ({
                                                 method: "POST",
-                                                url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
+                                                url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
                                                 params: data,
                                             }).then(function () {
                                                 tinyUser.friend = true;
@@ -818,8 +819,8 @@ MyApp.PostView = {
                                     m("button", {
                                         "class":"btn btn-success",
                                         onclick: function () {
-                                            Profile.likeIt(item.key.name);
-                                            console.log("like:"+item.key.id)
+                                            MyApp.Profile.likeIt(item.key.name);
+                                            console.log("Like:"+item.key.id)
                                         },
                                 },
                                 "Like your own post (weird)")

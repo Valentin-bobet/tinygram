@@ -50,4 +50,34 @@ import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream
      )
 public class LikeEndpoint {
 
+	@ApiMethod(name= "newLike", path="newLike", httpMethod = HttpMethod.POST)
+	public Entity newLike(User u, Like like) throws UnauthorizedException {
+
+		if (u.getEmail() == null) {
+			throw new UnauthorizedException("Invalid credentials");
+		}
+
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
+	    Query searchQuery = new Query("like").setFilter(CompositeFilterOperator.and(
+	    		new FilterPredicate("Email", FilterOperator.EQUAL, u.getEmail()),
+	    		new FilterPredicate("Post", FilterOperator.EQUAL, like.getPostLiked())));
+
+	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
+
+		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
+
+		if(searchQueryResult.isEmpty()) {
+			Entity e = new Entity("like");
+			e.setProperty("Email", u.getEmail());
+			e.setProperty("Post", like.getPostLiked());
+
+			DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
+			Transaction txn = datastore_2.beginTransaction();
+			datastore_2.put(e);
+			txn.commit();
+			return e;
+		}
+		return null;
+    }
 }

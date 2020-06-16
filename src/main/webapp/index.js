@@ -224,41 +224,7 @@ MyApp.Searchbar = {
                 i++;
             });
             m.route.set("/search");
-
-            /*
-            MyApp.User.userData.postList=result.items
-            if ('nextPageToken' in result) {
-                MyApp.User.userData.nextToken= result.nextPageToken
-            } else {
-                MyApp.User.userData.nextToken=""
-            }*/
         })
-
-        /**
-        $.ajax({
-            type: 'POST',
-            url: $("#searchForm").attr('action'),
-            data: $("#searchForm").serialize()
-        }).done(function (response) {
-            showSearchList = true;
-            if(typeof response.tinyUser !== "undefined") {
-                var i = 0;
-                response.tinyUser.forEach(tinyUser => {
-                    MyApp.SearchedUsersList.tinyUserList[i] = {
-                        email:tinyUser.email,
-                        name:tinyUser.name,
-                        invertedName:tinyUser.invertedName,
-                        firstName:tinyUser.firstName,
-                        lastName:tinyUser.lastName,
-                        url:tinyUser.url,
-                        friend:tinyUser.friend,
-                    }
-                    i++;
-                });
-            }
-            m.route.set("/search");
-        })
-        */
     }
 }
 
@@ -482,7 +448,7 @@ MyApp.User = {
     loadList: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
+            url: "_ah/api/post_api/v1/getPost"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
         })
         .then(function(result) {
             console.log("load_list:",result)
@@ -497,7 +463,7 @@ MyApp.User = {
     next: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/myApi/v1/collectionresponse_entity",
+            url: "_ah/api/post_api/v1/getPost",
             params: {
                 'next':MyApp.User.userData.nextToken,
                 'access_token': encodeURIComponent(MyApp.Profile.userData.id)
@@ -813,7 +779,7 @@ MyApp.Profile = {
     loadList: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/myApi/v1/collectionresponse_entity"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
+            url: "_ah/api/post_api/v1/getPost"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
         })
         .then(function(result) {
             console.log("load_list:",result)
@@ -828,7 +794,7 @@ MyApp.Profile = {
     next: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/myApi/v1/collectionresponse_entity",
+            url: "_ah/api/post_api/v1/getPost",
             params: {
                 'next':MyApp.Profile.userData.nextToken,
                 'access_token': encodeURIComponent(MyApp.Profile.userData.id)
@@ -858,7 +824,7 @@ MyApp.Profile = {
         }
         return m.request({
             method: "POST",
-            url: "_ah/api/myApi/v1/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            url: "_ah/api/post_api/v1/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
             params: data,
         })
         .then(function(result) {
@@ -938,6 +904,7 @@ MyApp.PostView = {
                     }),
                 ]),
                 vnode.attrs.profile.userData.postList.map(function(item) {
+                    console.log(item);
                     if (vnode.attrs.owned) {
                         return m("tr", [
                             m('td', {
@@ -977,16 +944,15 @@ MyApp.PostView = {
 	                                  "class":"btn btn-danger",
 	                                  onclick: function() {
 	                                	  var data = {
-	                                			  'entity':item.key.kind,
-	                                			  'id': item.key.name
+                                                'entity':item.key.kind,
+                                                'id': item.key.name
 	                                	  };
-
 	                                	  return m.request ({
-	                                		  method: "POST",
-	                                		  url: "_ah/api/myApi/v1/Delete"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
-	                                		  params: data,
+                                                method: "POST",
+                                                url: "_ah/api/myApi/v1/Delete"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+                                                params: data,
 	                                	  }).then(function(result) {
-	                                          console.log("delete finish")
+                                                m.route.set("/profile");
 	                                      })
 	                                   },
 

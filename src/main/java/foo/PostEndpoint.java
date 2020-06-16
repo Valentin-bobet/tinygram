@@ -50,4 +50,56 @@ import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream
      )
 public class PostEndpoint {
 
+	@ApiMethod(name = "getPost", path = "getPost" ,httpMethod=ApiMethod.HttpMethod.GET)
+	public CollectionResponse<Entity> getPost(User user, @Nullable @Named("next") String cursorString)
+			throws UnauthorizedException {
+
+		if (user == null) {
+			throw new UnauthorizedException("Invalid credentials");
+		}
+
+		Query q = new Query("Post").setFilter(new FilterPredicate("owner", FilterOperator.EQUAL, user.getEmail()));
+
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		PreparedQuery pq = datastore.prepare(q);
+
+		FetchOptions fetchOptions = FetchOptions.Builder.withLimit(2);
+
+		if (cursorString != null) {
+			fetchOptions.startCursor(Cursor.fromWebSafeString(cursorString));
+		}
+
+		QueryResultList<Entity> results = pq.asQueryResultList(fetchOptions);
+		cursorString = results.getCursor().toWebSafeString();
+
+		return CollectionResponse.<Entity>builder().setItems(results).setNextPageToken(cursorString).build();
+	}
+
+	@ApiMethod(name = "postMsg", httpMethod = HttpMethod.POST)
+	public Entity postMsg(User user, PostMessage pm) throws UnauthorizedException {
+
+		if (user == null) {
+			throw new UnauthorizedException("Invalid credentials");
+		}
+
+		Entity e = new Entity("Post", Long.MAX_VALUE-(new Date()).getTime()+":"+user.getEmail());
+		e.setProperty("owner", user.getEmail());
+		e.setProperty("url", pm.url);
+		e.setProperty("body", pm.body);
+		e.setProperty("likes", 0);
+		e.setProperty("date", new Date());
+
+///		Solution pour pas projeter les listes
+//		Entity pi = new Entity("PostIndex", e.getKey());
+//		HashSet<String> rec=new HashSet<String>();
+//		pi.setProperty("receivers",rec);
+
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Transaction txn = datastore.beginTransaction();
+		datastore.put(e);
+//		datastore.put(pi);
+		txn.commit();
+		return e;
+	}
+
 }

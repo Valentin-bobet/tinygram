@@ -101,5 +101,39 @@ public class UserEndpoint {
         Entity tinyUser = preparedUserQuery.asSingleEntity();
 
         return tinyUser;
+    }
+
+    @ApiMethod(name= "createUser", path="createUser", httpMethod = HttpMethod.POST)
+	public Entity tinyUser(User user, TinyUser tinyUser) throws UnauthorizedException {
+
+		if (user == null) {
+			throw new UnauthorizedException("Invalid credentials");
+		}
+
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
+	    Query searchQuery = new Query("tinyUser").setFilter(
+	    		new FilterPredicate("email", FilterOperator.EQUAL, tinyUser.email));
+
+	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
+
+		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
+
+		if(searchQueryResult.isEmpty()) {
+			Entity e = new Entity("tinyUser");
+			e.setProperty("email", tinyUser.email);
+			e.setProperty("name", tinyUser.name);
+			e.setProperty("invertedName", tinyUser.invertedName);
+			e.setProperty("firstName", tinyUser.firstName);
+			e.setProperty("lastName", tinyUser.lastName);
+			e.setProperty("url", tinyUser.url);
+
+			DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
+			Transaction txn = datastore_2.beginTransaction();
+			datastore_2.put(e);
+			txn.commit();
+			return e;
+		}
+		return null;
 	}
 }

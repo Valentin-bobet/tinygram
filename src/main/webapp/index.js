@@ -876,7 +876,7 @@ MyApp.Profile = {
         };
         return m.request ({
             method: "POST",
-            url: "_ah/api/myApi/v1/tinyUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            url: "_ah/api/user_api/v1/createUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
             params: data,
         })
     },

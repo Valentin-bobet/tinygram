@@ -1,9 +1,9 @@
 package foo;
 
-public class PostMessage {
+public class Post {
 	public String owner;
 	public String body;
 	public String url;
 
-	public PostMessage() {}
+	public Post() {}
 }

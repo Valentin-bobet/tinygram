@@ -15,31 +15,31 @@ else
     sed -i "s/client_id: \".*\"/client_id: \"$2\"/" src/main/webapp/index.js
     echo "OK"
 
-    echo "Replacing project url and google sign in client id in src/main/java/foo/PostEndpoint.java by $2 :"
-    sed -i "s/audiences = \".*\",/audiences = \"$2\",/" src/main/java/foo/PostEndpoint.java
-    sed -i "s/clientIds = \".*\",/clientIds = \"$2\",/" src/main/java/foo/PostEndpoint.java
-    sed -i "s/ownerDomain = \".*.appspot.com\",/ownerDomain = \"$1.appspot.com\",/" src/main/java/foo/PostEndpoint.java
-    sed -i "s/ownerName = \".*.appspot.com\",/ownerName = \"$1.appspot.com\",/" src/main/java/foo/PostEndpoint.java
+    echo "Replacing project url and google sign in client id in src/main/java/endpoints/PostEndpoint.java by $2 :"
+    sed -i "s/audiences = \".*\",/audiences = \"$2\",/" src/main/java/endpoints/PostEndpoint.java
+    sed -i "s/clientIds = \".*\",/clientIds = \"$2\",/" src/main/java/endpoints/PostEndpoint.java
+    sed -i "s/ownerDomain = \".*.appspot.com\",/ownerDomain = \"$1.appspot.com\",/" src/main/java/endpoints/PostEndpoint.java
+    sed -i "s/ownerName = \".*.appspot.com\",/ownerName = \"$1.appspot.com\",/" src/main/java/endpoints/PostEndpoint.java
     echo "OK"
-    
-    echo "Replacing project url and google sign in client id in src/main/java/foo/UserEndpoint.java by $2 :"
-    sed -i "s/audiences = \".*\",/audiences = \"$2\",/" src/main/java/foo/UserEndpoint.java
-    sed -i "s/clientIds = \".*\",/clientIds = \"$2\",/" src/main/java/foo/UserEndpoint.java
-    sed -i "s/ownerDomain = \".*.appspot.com\",/ownerDomain = \"$1.appspot.com\",/" src/main/java/foo/UserEndpoint.java
-    sed -i "s/ownerName = \".*.appspot.com\",/ownerName = \"$1.appspot.com\",/" src/main/java/foo/UserEndpoint.java
+
+    echo "Replacing project url and google sign in client id in src/main/java/endpoints/UserEndpoint.java by $2 :"
+    sed -i "s/audiences = \".*\",/audiences = \"$2\",/" src/main/java/endpoints/UserEndpoint.java
+    sed -i "s/clientIds = \".*\",/clientIds = \"$2\",/" src/main/java/endpoints/UserEndpoint.java
+    sed -i "s/ownerDomain = \".*.appspot.com\",/ownerDomain = \"$1.appspot.com\",/" src/main/java/endpoints/UserEndpoint.java
+    sed -i "s/ownerName = \".*.appspot.com\",/ownerName = \"$1.appspot.com\",/" src/main/java/endpoints/UserEndpoint.java
     echo "OK"
-    
-    echo "Replacing project url and google sign in client id in src/main/java/foo/LikeEndpoint.java by $2 :"
-    sed -i "s/audiences = \".*\",/audiences = \"$2\",/" src/main/java/foo/LikeEndpoint.java
-    sed -i "s/clientIds = \".*\",/clientIds = \"$2\",/" src/main/java/foo/LikeEndpoint.java
-    sed -i "s/ownerDomain = \".*.appspot.com\",/ownerDomain = \"$1.appspot.com\",/" src/main/java/foo/LikeEndpoint.java
-    sed -i "s/ownerName = \".*.appspot.com\",/ownerName = \"$1.appspot.com\",/" src/main/java/foo/LikeEndpoint.java
+
+    echo "Replacing project url and google sign in client id in src/main/java/endpoints/LikeEndpoint.java by $2 :"
+    sed -i "s/audiences = \".*\",/audiences = \"$2\",/" src/main/java/endpoints/LikeEndpoint.java
+    sed -i "s/clientIds = \".*\",/clientIds = \"$2\",/" src/main/java/endpoints/LikeEndpoint.java
+    sed -i "s/ownerDomain = \".*.appspot.com\",/ownerDomain = \"$1.appspot.com\",/" src/main/java/endpoints/LikeEndpoint.java
+    sed -i "s/ownerName = \".*.appspot.com\",/ownerName = \"$1.appspot.com\",/" src/main/java/endpoints/LikeEndpoint.java
     echo "OK"
-    
-    echo "Replacing project url and google sign in client id in src/main/java/foo/ScoreEndpoint.java by $2 :"
-    sed -i "s/audiences = \".*\",/audiences = \"$2\",/" src/main/java/foo/ScoreEndpoint.java
-    sed -i "s/clientIds = \".*\",/clientIds = \"$2\",/" src/main/java/foo/ScoreEndpoint.java
-    sed -i "s/ownerDomain = \".*.appspot.com\",/ownerDomain = \"$1.appspot.com\",/" src/main/java/foo/ScoreEndpoint.java
-    sed -i "s/ownerName = \".*.appspot.com\",/ownerName = \"$1.appspot.com\",/" src/main/java/foo/ScoreEndpoint.java
+
+    echo "Replacing project url and google sign in client id in src/main/java/endpoints/ScoreEndpoint.java by $2 :"
+    sed -i "s/audiences = \".*\",/audiences = \"$2\",/" src/main/java/endpoints/ScoreEndpoint.java
+    sed -i "s/clientIds = \".*\",/clientIds = \"$2\",/" src/main/java/endpoints/ScoreEndpoint.java
+    sed -i "s/ownerDomain = \".*.appspot.com\",/ownerDomain = \"$1.appspot.com\",/" src/main/java/endpoints/ScoreEndpoint.java
+    sed -i "s/ownerName = \".*.appspot.com\",/ownerName = \"$1.appspot.com\",/" src/main/java/endpoints/ScoreEndpoint.java
     echo "OK"
 fi

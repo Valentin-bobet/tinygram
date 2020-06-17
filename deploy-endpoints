@@ -1,8 +1,12 @@
 #!/bin/bash
 
+mvn clean install
+
 if [[ ! -f target/openapi-docs/openapi.json ]]
 then
+    echo "#########################################"
     echo "No openapi.json file found : getting it" && mvn endpoints-framework:openApiDocs
+    echo "#########################################"
 fi
 
-mvn install && gcloud endpoints services deploy target/openapi-docs/openapi.json
+gcloud endpoints services deploy target/openapi-docs/openapi.json

@@ -1,10 +1,12 @@
-package foo;
+package endpoints;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
+import entities.*;
+
+//import java.util.Date;
+//import java.util.HashSet;
+//import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
+//import java.util.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -17,7 +19,7 @@ import com.google.api.server.spi.config.Named;
 import com.google.api.server.spi.config.Nullable;
 import com.google.api.server.spi.response.CollectionResponse;
 import com.google.api.server.spi.response.UnauthorizedException;
-import com.google.api.server.spi.auth.EspAuthenticator;
+//import com.google.api.server.spi.auth.EspAuthenticator;
 
 import com.google.appengine.api.datastore.Cursor;
 import com.google.appengine.api.datastore.DatastoreService;
@@ -25,31 +27,23 @@ import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
-import com.google.appengine.api.datastore.Key;
+//import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.PreparedQuery;
-import com.google.appengine.api.datastore.PropertyProjection;
-import com.google.appengine.api.datastore.PreparedQuery.TooManyResultsException;
+//import com.google.appengine.api.datastore.PropertyProjection;
+//import com.google.appengine.api.datastore.PreparedQuery.TooManyResultsException;
 import com.google.appengine.api.datastore.Query.CompositeFilter;
 import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
-import com.google.appengine.api.datastore.Query.Filter;
+//import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
-import com.google.appengine.api.datastore.Query.SortDirection;
+//import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.datastore.QueryResultList;
 import com.google.appengine.api.datastore.Transaction;
-import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream;
+//import com.google.appengine.repackaged.com.google.common.io.CountingOutputStream;
 
-@Api(name = "user_api",
-     version = "v1",
-     audiences = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
-  	 clientIds = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
-     namespace =
-     @ApiNamespace(
-		   ownerDomain = "tinygram-lucas.appspot.com",
-		   ownerName = "tinygram-lucas.appspot.com",
-		   packagePath = "")
-     )
+@SuppressWarnings("unchecked")
+@Api(name = "user_api", version = "1.0", audiences = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com", clientIds = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com", namespace = @ApiNamespace( ownerDomain = "tinygram-lucas.appspot.com", ownerName = "tinygram-lucas.appspot.com", packagePath = ""))
 public class UserEndpoint {
 
     @ApiMethod(name = "getSearchUser", path="getSearchUser", httpMethod = HttpMethod.GET)
@@ -72,8 +66,6 @@ public class UserEndpoint {
 
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
-
-
         FetchOptions fetchOptions = FetchOptions.Builder.withLimit(10);
 
 		if (cursorString != null) {
@@ -106,7 +98,7 @@ public class UserEndpoint {
     }
 
     @ApiMethod(name= "createUser", path="createUser", httpMethod = HttpMethod.POST)
-	public Entity tinyUser(User user, TinyUser tinyUser) throws UnauthorizedException {
+	public Entity createUser(User user, TinyUser tinyUser) throws UnauthorizedException {
 
 		if (user == null) {
 			throw new UnauthorizedException("Invalid credentials");
@@ -122,88 +114,88 @@ public class UserEndpoint {
 		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
 
 		if(searchQueryResult.isEmpty()) {
-			Entity e = new Entity("tinyUser");
-			e.setProperty("email", tinyUser.email);
-			e.setProperty("name", tinyUser.name);
-			e.setProperty("invertedName", tinyUser.invertedName);
-			e.setProperty("firstName", tinyUser.firstName);
-			e.setProperty("lastName", tinyUser.lastName);
-			e.setProperty("url", tinyUser.url);
+			Entity newTinyUser = new Entity("tinyUser");
+			newTinyUser.setProperty("email", tinyUser.email);
+			newTinyUser.setProperty("name", tinyUser.name);
+			newTinyUser.setProperty("invertedName", tinyUser.invertedName);
+			newTinyUser.setProperty("firstName", tinyUser.firstName);
+			newTinyUser.setProperty("lastName", tinyUser.lastName);
+			newTinyUser.setProperty("url", tinyUser.url);
 
 			List<String> followers = new ArrayList<>();
 			followers.add(user.getEmail());
-			e.setProperty("followers", followers);
+			newTinyUser.setProperty("followers", followers);
 
-			DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
-			Transaction txn = datastore_2.beginTransaction();
-			datastore_2.put(e);
-			txn.commit();
-			return e;
+			Transaction newTinyUserTransaction = datastore.beginTransaction();
+			datastore.put(newTinyUser);
+			newTinyUserTransaction.commit();
+			return newTinyUser;
 		}
 		return null;
 	}
 
 	@ApiMethod(name= "followUser",path= "followUser", httpMethod = HttpMethod.POST)
-	public Entity Friendship(User u,Friendship tu) throws UnauthorizedException, EntityNotFoundException {
+	public Entity Follow(User user,Friendship friend) throws UnauthorizedException, EntityNotFoundException {
 
-		if (u == null) {
+		if (user == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
 
-	    Query searchQuery = new Query("tinyUser").setFilter(new FilterPredicate("email", FilterOperator.EQUAL, tu.getTargetUser()));
+	    Query userQuery = new Query("tinyUser").setFilter(new FilterPredicate("email", FilterOperator.EQUAL, friend.getTargetUser()));
 
 	    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
+	    PreparedQuery preparedUserQuery = datastore.prepare(userQuery);
 
-		Entity e = preparedSearchQuery.asSingleEntity();
+		Entity userQueryResult = preparedUserQuery.asSingleEntity();
 
-		if (((List<String>)e.getProperty("followers")).contains(u.getEmail()) == false) {
+		if (((List<String>)userQueryResult.getProperty("followers")).contains(user.getEmail()) == false) {
 
 			List<String> followers = new ArrayList<>();
-			followers = (List<String>)e.getProperty("followers");
 
-			followers.add(u.getEmail());
+			followers = (List<String>)userQueryResult.getProperty("followers");
 
-			e.setProperty("followers", followers);
+			followers.add(user.getEmail());
 
-			Transaction txn = datastore.beginTransaction();
-			datastore.put(e);
-			txn.commit();
-			return e;
+			userQueryResult.setProperty("followers", followers);
+
+			Transaction followTransaction = datastore.beginTransaction();
+			datastore.put(userQueryResult);
+			followTransaction.commit();
+			return userQueryResult;
 		}
 		return null;
 
 	}
 
 	@ApiMethod(name= "unfollowUser",path= "unfollowUser", httpMethod = HttpMethod.POST)
-	public Entity stopFriend(User u,Friendship tu) throws UnauthorizedException, EntityNotFoundException {
+	public Entity Unfollow(User user,Friendship friend) throws UnauthorizedException, EntityNotFoundException {
 
-		if (u == null) {
+		if (user == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
 
-	    Query searchQuery = new Query("tinyUser").setFilter(new FilterPredicate("email", FilterOperator.EQUAL, tu.getTargetUser()));
+	    Query userQuery = new Query("tinyUser").setFilter(new FilterPredicate("email", FilterOperator.EQUAL, friend.getTargetUser()));
 
 	    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
+	    PreparedQuery preparedUserQuery = datastore.prepare(userQuery);
 
-		Entity e = preparedSearchQuery.asSingleEntity();
+		Entity userQueryResult = preparedUserQuery.asSingleEntity();
 
-		if (((List<String>)e.getProperty("followers")).contains(u.getEmail()) == true) {
+		if (((List<String>)userQueryResult.getProperty("followers")).contains(user.getEmail()) == true) {
 
 			List<String> followers = new ArrayList<>();
-			followers = (List<String>)e.getProperty("followers");
+			followers = (List<String>)userQueryResult.getProperty("followers");
 
-			followers.remove(u.getEmail());
+			followers.remove(user.getEmail());
 
-			e.setProperty("followers", followers);
+			userQueryResult.setProperty("followers", followers);
 
-			Transaction txn = datastore.beginTransaction();
-			datastore.put(e);
-			txn.commit();
-			return e;
+			Transaction unfollowTransaction = datastore.beginTransaction();
+			datastore.put(userQueryResult);
+			unfollowTransaction.commit();
+			return userQueryResult;
 		}
 		return null;
 

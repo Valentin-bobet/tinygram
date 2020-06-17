@@ -51,7 +51,7 @@ public class Consistency extends HttpServlet {
 		List<Entity> result = pq.asList(FetchOptions.Builder.withDefaults());
 		for (Entity entity : result) {
 			datastore.delete(entity.getKey());
-			}	
+			}
 		}
 	}
 
@@ -120,7 +120,7 @@ public class Consistency extends HttpServlet {
 				public void run() {
 					Query q = new Query("Person");
 					PreparedQuery pq = datastore.prepare(q);
-	
+
 	//				txn = datastore.beginTransaction();
 					FetchOptions fetchOptions = FetchOptions.Builder.withLimit(10);
 					Iterator<Entity> results = pq.asIterator(fetchOptions);
@@ -156,7 +156,7 @@ public class Consistency extends HttpServlet {
 
 		response.getWriter().append("<h1> Inserting while quering Entity Group</h1>");
 
-		
+
 		this.cleaning();
 		tparent.start();
 		th[1].start();
@@ -168,6 +168,6 @@ public class Consistency extends HttpServlet {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
 }

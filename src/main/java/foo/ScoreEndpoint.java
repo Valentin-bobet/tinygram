@@ -1,5 +1,6 @@
 package foo;
 
+
 import java.io.Console;
 import java.util.ArrayList;
 import java.util.Date;
@@ -47,24 +48,24 @@ import com.google.appengine.repackaged.com.google.protobuf.proto1api.ListValue;
 
 @Api(name = "myApi",
      version = "v1",
-     audiences = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
-  	 clientIds = "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com",
+     audiences = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
+  	 clientIds = "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
-		   ownerDomain = "simple-basique-basique-simple.appspot.com",
-		   ownerName = "simple-basique-basique-simple.appspot.com",
+		   ownerDomain = "tinygram-lucas.appspot.com",
+		   ownerName = "tinygram-lucas.appspot.com",
 		   packagePath = "")
      )
 
 public class ScoreEndpoint {
 
-	@ApiMethod(name = "postMessage", httpMethod = HttpMethod.POST)
-	public Entity postMessage(PostMessage pm) {
-		
+	@ApiMethod(name = "Post", httpMethod = HttpMethod.POST)
+	public Entity Post(Post post) {
+
 		Entity e = new Entity("Post"); // quelle est la clef ?? non specifié -> clef automatique
-		e.setProperty("owner", pm.owner);
-		e.setProperty("url", pm.url);
-		e.setProperty("body", pm.body);
+		e.setProperty("owner", post.owner);
+		e.setProperty("url", post.url);
+		e.setProperty("body", post.body);
 		e.setProperty("likes", 0);
 		e.setProperty("date", new Date());
 
@@ -121,7 +122,7 @@ public class ScoreEndpoint {
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		PreparedQuery pq = datastore.prepare(q);
 
-		FetchOptions fetchOptions = FetchOptions.Builder.withLimit(2);
+		FetchOptions fetchOptions = FetchOptions.Builder.withLimit(5);
 
 		if (cursorString != null) {
 			fetchOptions.startCursor(Cursor.fromWebSafeString(cursorString));
@@ -134,24 +135,24 @@ public class ScoreEndpoint {
 	}
 
 	@ApiMethod(name = "postMsg", httpMethod = HttpMethod.POST)
-	public Entity postMsg(User user, PostMessage pm) throws UnauthorizedException {
+	public Entity postMsg(User user, Post post) throws UnauthorizedException {
 
 		if (user == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		
+
 		Query q = new Query("tinyUser").setFilter(new FilterPredicate("email", FilterOperator.EQUAL, user.getEmail()));
 		PreparedQuery pq = datastore.prepare(q);
 		Entity searchQueryResult = pq.asSingleEntity();
-		
+
 		List<String> recievers = new ArrayList<>();
 		recievers = (List<String>)searchQueryResult.getProperty("followers");
 
 		Entity e = new Entity("Post", Long.MAX_VALUE-(new Date()).getTime()+":"+user.getEmail());
 		e.setProperty("owner", user.getEmail());
-		e.setProperty("url", pm.url);
-		e.setProperty("body", pm.body);
+		e.setProperty("url", post.url);
+		e.setProperty("body", post.body);
 		e.setProperty("likes", 0);
 		e.setProperty("date", new Date());
 		e.setProperty("recievers", recievers);
@@ -232,7 +233,6 @@ public class ScoreEndpoint {
 			Transaction txn = datastore_2.beginTransaction();
 			datastore_2.put(e);
 			txn.commit();
-			
 			try {
 				this.countLike(u, like);
 			} catch (UnauthorizedException e1) {
@@ -242,7 +242,6 @@ public class ScoreEndpoint {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-			
 			return e;
 		}
 		return null;
@@ -257,20 +256,20 @@ public class ScoreEndpoint {
 		}
 
 	    Query searchQuery = new Query("tinyUser").setFilter(new FilterPredicate("email", FilterOperator.EQUAL, tu.getTargetUser()));
-	    
+
 	    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-	    
+
 	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
 
 		Entity e = preparedSearchQuery.asSingleEntity();
-		
+
 		List<String> followers = new ArrayList<>();
-		followers = (List<String>)e.getProperty("followers");				
-		
+		followers = (List<String>)e.getProperty("followers");
+
 		followers.add(u.getEmail());
-		
+
 		e.setProperty("followers", followers);
-				
+
 		Transaction txn = datastore.beginTransaction();
 		datastore.put(e);
 		txn.commit();
@@ -280,15 +279,15 @@ public class ScoreEndpoint {
 
 	@ApiMethod(name= "countLike", httpMethod = HttpMethod.POST)
 	public Entity countLike(User u, Like like) throws UnauthorizedException, EntityNotFoundException {
-		
+
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
 		Key clePost = KeyFactory.createKey("Post", like.getPostLiked());
-		
+
 		Entity lePost = datastore.get(clePost);
 
 		Entity e = new Entity("Post");
-		
+
 		e.setProperty("likes", (Long) lePost.getProperty("likes") + 1);
 		System.out.println(e.getProperty("likes"));
 

@@ -6,7 +6,7 @@ m.route(document.body, "/", {
     },
     "/home" : {
         onmatch: function() {
-            if (!auth2.isSignedIn.get()) return MyApp.NotSignedIn
+            if (!auth2.isSignedIn.get()) return MyApp.NotSignedIn;
             else return MyApp.Timeline;
         }
     },
@@ -42,7 +42,7 @@ m.route(document.body, "/", {
             return MyApp.Admin;
         }
     }
-})
+});
 
 var showProfile = false;
 var showSearchList = false;
@@ -55,7 +55,7 @@ var googleUser; // The current user
 
 gapi.load('auth2', function() {
     auth2 = gapi.auth2.init({
-        client_id: "870442540848-fop7dnthuie202lpqh38os9i9n4phgv3.apps.googleusercontent.com"
+        client_id: "834229904246-7e02hoftjchsgnkh2a1be93ao1u7ip4o.apps.googleusercontent.com"
     });
     auth2.attachClickHandler('signin-button', {}, onSuccess, onFailure);
 
@@ -100,8 +100,10 @@ var onSuccess = function(user) {
 
     isLoggedIn=true;
 
-    MyApp.Profile.tinyUser();
-    m.route.set("/");
+    MyApp.Profile.createUser();
+    MyApp.Timeline.getTimeline();
+
+    m.route.set("/home");
 };
 
 var onFailure = function(error) {
@@ -128,9 +130,9 @@ var MyApp = {
                 m(MyApp.Navbar, {}),
 
             ])
-        )
+        );
     }
-}
+};
 
 MyApp.Navbar = {
     view: function () {
@@ -156,7 +158,7 @@ MyApp.Navbar = {
         ]));
     },
 
-}
+};
 
 MyApp.signInButton = {
     view: function () {
@@ -166,7 +168,7 @@ MyApp.signInButton = {
             }
         );
     }
-}
+};
 
 MyApp.Searchbar = {
     view: function () {
@@ -204,14 +206,17 @@ MyApp.Searchbar = {
                 'email': MyApp.Profile.userData.email,
                 'search':$("#search").val(),
             },
-            url: "_ah/api/user_api/v1/getSearchUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
-        })
+            url: "_ah/api/user_api/1.0/getSearchUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),        })
         .then(function(response) {
-            console.log("users:",response)
+            console.log("users:",response);
             var i = 0;
             var tinyUser = {};
-            response.items.forEach(item => {
-                tinyUser=item.properties
+            if(response.items === undefined) {
+                MyApp.SearchedUsersList.tinyUserList= [];
+
+            } else {
+                response.items.forEach(function (item) {
+                tinyUser=item.properties;
                 MyApp.SearchedUsersList.tinyUserList[i] = {
                     email:tinyUser.email,
                     name:tinyUser.name,
@@ -220,13 +225,14 @@ MyApp.Searchbar = {
                     lastName:tinyUser.lastName,
                     url:tinyUser.url,
                     friend:tinyUser.friend,
-                }
+                };
                 i++;
             });
+            }
             m.route.set("/search");
-        })
+        });
     }
-}
+};
 
 MyApp.profilePicAndSignOut = {
     view: function () {
@@ -252,7 +258,7 @@ MyApp.profilePicAndSignOut = {
             return m("div");
         }
     }
-}
+};
 
 MyApp.SearchedUsersList = {
     tinyUserList: [],
@@ -289,8 +295,7 @@ MyApp.SearchedUsersList = {
 //                                            console.log(MyApp.Profile.userData.email+' et '+tinyUser.email);
 //                                            return m.request ({
 //                                                method: "POST",
-//                                                url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
-//                                                params: data,
+//                                                url: "_ah/api/myApi/1.0/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),//                                                params: data,
 //                                            }).then(function () {
 //                                                tinyUser.friend = true;
 //                                                document.getElementById("btn_follow").class = "btn-danger";
@@ -305,15 +310,14 @@ MyApp.SearchedUsersList = {
 //                                                };
 //                                            return m.request ({
 //                                                method: "POST",
-//                                                url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
-//                                                params: data,
+//                                                url: "_ah/api/myApi/1.0/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),//                                                params: data,
 //                                            }) **/
 //=======
                                     m('td', {
                                         "style":"width:10vw",
                                         onclick: function (e) {
                                             e.preventDefault();
-                                            MyApp.SearchedUsersList.goToUser(tinyUser);
+                                            MyApp.SearchedUsersList.goToUser(tinyUser.email);
 //>>>>>>> 63432560beda2701366eb5591a16d9d59a77a4cc
                                         }
                                     },  m('img',
@@ -328,7 +332,7 @@ MyApp.SearchedUsersList = {
                                         "style":"width:80vw",
                                         onclick: function (e) {
                                             e.preventDefault();
-                                            MyApp.SearchedUsersList.goToUser(tinyUser);
+                                            MyApp.SearchedUsersList.goToUser(tinyUser.email);
                                         }
                                     }, [
                                         m('h1', tinyUser.name),
@@ -341,36 +345,33 @@ MyApp.SearchedUsersList = {
                                         id: "btn_follow",
                                         onclick: function (e) {
                                             e.preventDefault();
+                                            var data = {
+                                                'askingUser': MyApp.Profile.userData.email,
+                                                'targetUser': tinyUser.email,
+                                            };
                                             if (!tinyUser.friend) {
-                                                var data = {
-                                                        'askingUser': MyApp.Profile.userData.email,
-                                                        'targetUser': tinyUser.email,
-                                                    };
                                                 return m.request ({
                                                     method: "POST",
-                                                    url: "_ah/api/user_api/v1/followUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
-                                                    params: data,
+                                                    url: "_ah/api/user_api/1.0/followUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                    params: data,
                                                 }).then(function () {
                                                     tinyUser.friend = true;
                                                     document.getElementById("btn_follow").class = "btn-danger";
                                                     console.log("Followed");
-                                                })
+                                                });
                                             } else {
                                                 return m.request ({
                                                     method: "POST",
-                                                    url: "_ah/api/user_api/v1/unfollowUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
-                                                    params: data,
+                                                    url: "_ah/api/user_api/1.0/unfollowUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                    params: data,
                                                 }).then(function () {
                                                     tinyUser.friend = false;
                                                     document.getElementById("btn_follow").class = "btn-success";
                                                     console.log("Unfollowed");
-                                                })
+                                                });
                                             }
-
                                         }
                                     }, tinyUser.friend?"Followed":"Follow")
                                     )
-                                ])
+                                ]);
                             })
                         ])
                     ])
@@ -379,17 +380,15 @@ MyApp.SearchedUsersList = {
                         m("h1.title", "No user found for your search...")
                     )
             )
-        )
+        );
     },
-    goToUser: function (tinyUser) {
-
+    goToUser: function (email) {
         m.request({
             method: "GET",
             params: {
-                'email': tinyUser.email,
+                'email': email,
             },
-            url: "_ah/api/user_api/v1/getUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
-        })
+            url: "_ah/api/user_api/1.0/getUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),        })
         .then(function (response) {
             console.log(response);
             var tinyUser = response.properties;
@@ -402,11 +401,11 @@ MyApp.SearchedUsersList = {
                 url:tinyUser.url,
                 nextToken:"",
                 postList:[],
-            }
+            };
             m.route.set("/user");
         });
     }
-}
+};
 
 
 MyApp.User = {
@@ -439,6 +438,31 @@ MyApp.User = {
                                     class: MyApp.User.userData.friend?"btn-danger":"btn-success",
 
                                     onclick: function () {
+                                        e.preventDefault();
+                                        var data = {
+                                            'askingUser': MyApp.Profile.userData.email,
+                                            'targetUser': tinyUser.email,
+                                        };
+                                        if (!tinyUser.friend) {
+                                            return m.request ({
+                                                method: "POST",
+                                                url: "_ah/api/user_api/1.0/followUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                params: data,
+                                            }).then(function () {
+                                                tinyUser.friend = true;
+                                                document.getElementById("btn_follow").class = "btn-danger";
+                                                console.log("Followed");
+                                            });
+                                        } else {
+                                            return m.request ({
+                                                method: "POST",
+                                                url: "_ah/api/user_api/1.0/unfollowUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                params: data,
+                                            }).then(function () {
+                                                tinyUser.friend = false;
+                                                document.getElementById("btn_follow").class = "btn-success";
+                                                console.log("Unfollowed");
+                                            });
+                                        }
+/*
                                         if(MyApp.User.userData.friend) {
                                             console.log("Unfollowed");
                                         } else {
@@ -449,13 +473,12 @@ MyApp.User = {
                                                 };
                                             return m.request ({
                                                 method: "POST",
-                                                url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
-                                                params: data,
+                                                url: "_ah/api/myApi/1.0/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),                                                params: data,
                                             }).then(function () {
                                             	tinyUser.friend = true;
                                                 console.log("Followed");
                                             })
-                                        }
+                                        }*/
                                     }
                                 }, MyApp.User.userData.friend?"Unfollow":"Follow")
                             ):
@@ -465,7 +488,7 @@ MyApp.User = {
                                     style:"cursor:inherit",
                                     onclick: function (e) {
                                         e.preventDefault();
-                                        m.route.set("/profile")
+                                        m.route.set("/profile");
                                     }
                                 }, "This is your public profile (click to access to your profile)")
                             ),
@@ -481,43 +504,43 @@ MyApp.User = {
                     m("div",m(MyApp.PostView,{profile: MyApp.User, owned:false}))
                 ]),
             ])
-        )
+        );
     },
     loadList: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/post_api/v1/getPost"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
-        })
+            url: "_ah/api/post_api/1.0/getPost"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)        })
         .then(function(result) {
-            console.log("load_list:",result)
-            MyApp.User.userData.postList=result.items
+            console.log("load_list:",result);
+            MyApp.User.userData.postList=result.items;
             if ('nextPageToken' in result) {
-                MyApp.User.userData.nextToken= result.nextPageToken
+                MyApp.User.userData.nextToken= result.nextPageToken;
             } else {
-                MyApp.User.userData.nextToken=""
+                MyApp.User.userData.nextToken="";
             }
-        })
+        });
     },
     next: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/post_api/v1/getPost",
-            params: {
+            url: "_ah/api/post_api/1.0/getPost",            params: {
                 'next':MyApp.User.userData.nextToken,
                 'access_token': encodeURIComponent(MyApp.Profile.userData.id)
             }
         })
         .then(function(result) {
-            console.log("next:",result)
-            result.items.map(function(item){MyApp.User.userData.postList.push(item)})
+            console.log("next:",result);
+            result.items.map( function(item) {
+                MyApp.User.userData.postList.push(item);
+            });
             if ('nextPageToken' in result) {
-                MyApp.User.userData.nextToken= result.nextPageToken
+                MyApp.User.userData.nextToken= result.nextPageToken;
             } else {
-                MyApp.User.userData.nextToken=""
+                MyApp.User.userData.nextToken="";
             }
-        })
+        });
     },
-}
+};
 
 MyApp.Timeline = {
     posts: [],
@@ -572,15 +595,15 @@ MyApp.Timeline = {
                                             m('td', {
                                                 "style":"width:20vw",
                                                 onclick: function () {
-                                                    MyApp.SearchedUsersList.goToUser(post.tinyUser);
+                                                    MyApp.SearchedUsersList.goToUser(post.owner);
                                                 }
                                             }, [
-                                                m("h1", post.tinyUser.name),
-                                                m("h2", post.tinyUser.email),
-                                                m('img', {
+                                                /*m("h1", post.tinyUser.name),*/
+                                                m("h2", post.owner),
+                                                /*m('img', {
                                                     class:"profile_image",
                                                     'src': post.tinyUser.url
-                                                })
+                                                })*/
                                             ]),
                                             m('td', {
                                                 "style":"width:40vw"
@@ -605,14 +628,12 @@ MyApp.Timeline = {
                                                     m("button", {
                                                         "class":"btn btn-success",
                                                         onclick: function () {
-                                                            MyApp.Profile.likeIt(post.key.name);
-                                                            console.log("like:"+post.key.id)
+                                                            MyApp.Timeline.like(post.key.name);
                                                         },
                                                 },
                                                 "Like")
                                             )
-                                        ])
-
+                                        ]);
                                     })
                                 ])
 
@@ -623,23 +644,48 @@ MyApp.Timeline = {
     getTimeline : function () {
         console.log("Get timeline : start");
         MyApp.Timeline.loading_gif = true;
-        $.ajax({
-            type: 'POST',
-            url: "/searchTimeline",
-            data: {
-                email:MyApp.Profile.userData.email
-            }
-        }).then(function (response) {
+        m.request({
+            method: "GET",
+            url: "_ah/api/post_api/1.0/getTimeline"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)        })
+        .then(function(response) {
             showTimeline = true;
             MyApp.Timeline.loading_gif = false;
-            console.log(typeof response.posts);
-            (typeof response.posts !== "undefined") ? MyApp.Timeline.posts = response.posts : MyApp.Timeline.posts = [];
-            console.log(MyApp.Timeline.posts)
+            var i = 0;
+            if (response.items === undefined) {
+                MyApp.Timeline.posts = [];
+            } else {
+                response.items.forEach( function (post) {
+                    MyApp.Timeline.posts[i] = {
+                        "key":post.key,
+                        "owner":post.properties.owner,
+                        "date":post.properties.date,
+                        "body":post.properties.body,
+                        "url":post.properties.url,
+                        "likes":post.properties.likes,
+                        "receivers":post.properties.receivers,
+                    };
+                    i++;
+                });
+            }
             console.log("Get timeline : done");
+            m.redraw();
+        });
+    },
+    like: function (postLiked) {
+	    var data = {
+            'postLiked': postLiked,
+            'email': MyApp.Profile.userData.email
+        };
+        m.request ({
+	 		method: "POST",
+	 		url: "_ah/api/like_api/1.0/newLike"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),	 		params: data,
+		}).then(function () {
             m.route.set("/home");
-        })
+            m.redraw();
+        });
+
     }
-}
+};
 
 MyApp.NotSignedIn = {
     view: function () {
@@ -715,7 +761,7 @@ MyApp.NotSignedIn = {
             ])
         ]);
     }
-}
+};
 
 MyApp.Profile = {
     userData: {
@@ -763,12 +809,14 @@ MyApp.Profile = {
                 m(".collapse[id='collapseNewPost'].mb-5", [
                     m("form", {
                         onsubmit: function(e) {
-                            e.preventDefault()
-                            if ($("#new_post_url").val()=="") var post_url="https://dummyimage.com/320x200/000/fff&text="+Date.now()
-                            else var post_url = $("#new_post_url").val();
-                            if ($("#new_post_body").val()=="") var post_body="bla bla bla \n"+Date.now()
-                            else var post_body = $("#new_post_body").val();
-                            MyApp.Profile.postMessage(post_url,post_body,false)
+                            var post_url = "";
+                            var post_body = "";
+                            e.preventDefault();
+                            if ($("#new_post_url").val()=="") post_url="https://dummyimage.com/320x200/000/fff&text="+Date.now();
+                            else post_url = $("#new_post_url").val();
+                            if ($("#new_post_body").val()=="") post_body="bla bla bla \n"+Date.now();
+                            else post_body = $("#new_post_body").val();
+                            MyApp.Profile.postMessage(post_url,post_body,false);
                         }},
                         [
                             m('div', {
@@ -806,70 +854,70 @@ MyApp.Profile = {
                     m("button.mt-3", {
                         class:"btn btn-info float-right",
                         onclick: function () {
-                            MyApp.Profile.postMessage()
+                            MyApp.Profile.postMessage();
                         },
                     },"Post Random Message"),
                 ]),
                 m("div",m(MyApp.PostView,{profile: MyApp.Profile, owned: true}))
             ])
-        ])
+        ]);
     },
     loadList: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/post_api/v1/getPost"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
-        })
+            url: "_ah/api/post_api/1.0/getPost"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)        })
         .then(function(result) {
-            console.log("load_list:",result)
-            MyApp.Profile.userData.postList=result.items
+            console.log("load_list:",result);
+            MyApp.Profile.userData.postList=result.items;
             if ('nextPageToken' in result) {
-                MyApp.Profile.userData.nextToken= result.nextPageToken
+                MyApp.Profile.userData.nextToken= result.nextPageToken;
             } else {
-                MyApp.Profile.userData.nextToken=""
+                MyApp.Profile.userData.nextToken="";
             }
-        })
+        });
     },
     next: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/post_api/v1/getPost",
-            params: {
+            url: "_ah/api/post_api/1.0/getPost",            params: {
                 'next':MyApp.Profile.userData.nextToken,
                 'access_token': encodeURIComponent(MyApp.Profile.userData.id)
             }
         })
         .then(function(result) {
-            console.log("next:",result)
-            result.items.map(function(item){MyApp.Profile.userData.postList.push(item)})
+            console.log("next:",result);
+            result.items.map( function(item) {
+                MyApp.Profile.userData.postList.push(item);
+            });
             if ('nextPageToken' in result) {
-                MyApp.Profile.userData.nextToken= result.nextPageToken
+                MyApp.Profile.userData.nextToken= result.nextPageToken;
             } else {
-                MyApp.Profile.nextToken=""
+                MyApp.Profile.nextToken="";
             }
-        })
+        });
     },
     postMessage: function(url, body, random=true) {
+        var data= {};
         if(random) {
-            var data= {
+            data= {
                 'url': "https://dummyimage.com/320x200/000/fff&text="+Date.now(),
                 'body': MyApp.Profile.userData.content
-            }
+            };
         } else {
-            var data= {
+            data= {
                 'url': url,
                 'body': body
-            }
+            };
         }
         return m.request({
             method: "POST",
-            url: "_ah/api/post_api/v1/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
-            params: data,
+            url: "_ah/api/post_api/1.0/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),            params: data,
         })
         .then(function(result) {
-            MyApp.Profile.loadList()
-        })
+            MyApp.Profile.loadList();
+        });
     },
-    tinyUser: function() {
+    createUser: function() {
         var data = {
             'email': MyApp.Profile.userData.email,
             'firstName': MyApp.Profile.userData.firstName,
@@ -880,23 +928,20 @@ MyApp.Profile = {
         };
         return m.request ({
             method: "POST",
-            url: "_ah/api/user_api/v1/createUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
-            params: data,
-        })
+            url: "_ah/api/user_api/1.0/createUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),            params: data,
+        });
     },
 	likeIt: function(postLiked) {
 	    var data = {
             'postLiked': postLiked,
             'mail': MyApp.Profile.userData.email
         };
-
 	    return m.request ({
 	 		method: "POST",
-	 		url: "_ah/api/like_api/v1/newLike"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
-	 		params: data,
-		})
+	 		url: "_ah/api/like_api/1.0/newLike"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),	 		params: data,
+		});
 	}
-}
+};
 
 MyApp.PostView = {
     view: function(vnode) {
@@ -970,7 +1015,7 @@ MyApp.PostView = {
                                         "class":"btn btn-success",
                                         onclick: function () {
                                             MyApp.Profile.likeIt(item.key.name);
-                                            console.log("Like:"+item.key.id)
+                                            console.log("Like:"+item.key.id);
                                         },
                                 },
                                 "Like your own post (weird)")
@@ -981,23 +1026,13 @@ MyApp.PostView = {
 	                            m("button", {
 	                                  "class":"btn btn-danger",
 	                                  onclick: function() {
-	                                	  var data = {
-                                                'entity':item.key.kind,
-                                                'id': item.key.name
-	                                	  };
-	                                	  return m.request ({
-                                                method: "POST",
-                                                url: "_ah/api/myApi/v1/Delete"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
-                                                params: data,
-	                                	  }).then(function(result) {
-                                                m.route.set("/profile");
-	                                      })
+                                          MyApp.PostView.deletePost(item);
 	                                   },
 
 	                            	},
 	                            "Delete this post")
                             )
-                        ])
+                        ]);
                     } else {
                         return m("tr", [
                             m('td', {
@@ -1025,24 +1060,37 @@ MyApp.PostView = {
                                         "class":"btn btn-success float-right",
                                         onclick: function () {
                                             MyApp.Profile.likeIt(item.key.name);
-                                            console.log("like:"+item.key.id)
+                                            console.log("like:"+item.key.id);
                                         },
                                 },
                                 "Like this post")
                             ),
-                        ])
+                        ]);
                     }
                 })
             ]),
             m('button',{
                 class: 'btn btn-info float-right mt-3',
                 onclick: function(e) {
-                    vnode.attrs.profile.next()
+                    vnode.attrs.profile.next();
                 }
             }, "Next"),
-        ])
+        ]);
+    },
+    deletePost: function (post) {
+        var data = {
+            'id': post.key.name
+        };
+        return m.request ({
+            method: "POST",
+            url: "_ah/api/post_api/1.0/deletePost"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                params: data,
+        }).then(function(result) {
+            m.redraw();
+            m.route.set("/profile");
+        });
+
     }
-}
+};
 
 MyApp.Login = {
     view: function() {
@@ -1052,9 +1100,9 @@ MyApp.Login = {
                 m("h1.title", 'Please Sign in with google to use the application.'),
                 m("h2", 'If no sign in button appears on the top left of the screen, please refresh the page.'),
             ])
-        ])
+        ]);
     }
-}
+};
 
 MyApp.Admin = {
     view: function() {
@@ -1069,22 +1117,24 @@ MyApp.Admin = {
                         MyApp.Profile.userData.email = MyApp.Profile.userData.firstName+"."+MyApp.Profile.userData.lastName+"@gmail.com";
                         MyApp.Profile.userData.url = "https://dummyimage.com/320x200/000/fff&text="+Date.now();
 
-                        console.log(MyApp.Profile.userData)
+                        console.log(MyApp.Profile.userData);
 
-                        MyApp.Profile.tinyUser();
+                        MyApp.Profile.createUser();
                     }
                 }, "Add random user")
             ])
-        ])
+        ]);
     },
     makeRandomName: function (type) {
         var firstNameArray = ["Adam", "Alex", "Aaron", "Ben", "Carl", "Dan", "David", "Edward", "Fred", "Frank", "George", "Hal", "Hank", "Ike", "John", "Jack", "Joe", "Larry", "Monte", "Matthew", "Mark", "Nathan", "Otto", "Paul", "Peter", "Roger", "Roger", "Steve", "Thomas", "Tim", "Ty", "Victor", "Walter"];
         var lastNameArray = ["Anderson", "Ashwoon", "Aikin", "Bateman", "Bongard", "Bowers", "Boyd", "Cannon", "Cast", "Deitz", "Dewalt", "Ebner", "Frick", "Hancock", "Haworth", "Hesch", "Hoffman", "Kassing", "Knutson", "Lawless", "Lawicki", "Mccord", "McCormack", "Miller", "Myers", "Nugent", "Ortiz", "Orwig", "Ory", "Paiser", "Pak", "Pettigrew", "Quinn", "Quizoz", "Ramachandran", "Resnick", "Sagar", "Schickowski", "Schiebel", "Sellon", "Severson", "Shaffer", "Solberg", "Soloman", "Sonderling", "Soukup", "Soulis", "Stahl", "Sweeney", "Tandy", "Trebil", "Trusela", "Trussel", "Turco", "Uddin", "Uflan", "Ulrich", "Upson", "Vader", "Vail", "Valente", "Van Zandt", "Vanderpoel", "Ventotla", "Vogal", "Wagle", "Wagner", "Wakefield", "Weinstein", "Weiss", "Woo", "Yang", "Yates", "Yocum", "Zeaser", "Zeller", "Ziegler", "Bauer", "Baxster", "Casal", "Cataldi", "Caswell", "Celedon", "Chambers", "Chapman", "Christensen", "Darnell", "Davidson", "Davis", "DeLorenzo", "Dinkins", "Doran", "Dugelman", "Dugan", "Duffman", "Eastman", "Ferro", "Ferry", "Fletcher", "Fietzer", "Hylan", "Hydinger", "Illingsworth", "Ingram", "Irwin", "Jagtap", "Jenson", "Johnson", "Johnsen", "Jones", "Jurgenson", "Kalleg", "Kaskel", "Keller", "Leisinger", "LePage", "Lewis", "Linde", "Lulloff", "Maki", "Martin", "McGinnis", "Mills", "Moody", "Moore", "Napier", "Nelson", "Norquist", "Nuttle", "Olson", "Ostrander", "Reamer", "Reardon", "Reyes", "Rice", "Ripka", "Roberts", "Rogers", "Root", "Sandstrom", "Sawyer", "Schlicht", "Schmitt", "Schwager", "Schutz", "Schuster", "Tapia", "Thompson", "Tiernan", "Tisler" ];
 
         if (type=="firstName") {
-            return firstNameArray[Math.floor(Math.random()*firstNameArray.length)]
+            return firstNameArray[Math.floor(Math.random()*firstNameArray.length)];
         } else {
-            return lastNameArray[Math.floor(Math.random()*firstNameArray.length)]
+            return lastNameArray[Math.floor(Math.random()*firstNameArray.length)];
         }
      }
-}
+
+
+};

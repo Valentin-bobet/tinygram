@@ -41,7 +41,7 @@
     <endpoints.management.version>1.0.12</endpoints.management.version>
 
     <checkstyle.skip>true</checkstyle.skip>
-    <endpoints.project.id></endpoints.project.id>
+    <endpoints.project.id>tinygram-lucas</endpoints.project.id>
     <maven.version>3.0.5</maven.version>
   </properties>
 

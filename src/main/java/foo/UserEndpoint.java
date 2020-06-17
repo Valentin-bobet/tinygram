@@ -158,17 +158,54 @@ public class UserEndpoint {
 
 		Entity e = preparedSearchQuery.asSingleEntity();
 		
-		List<String> followers = new ArrayList<>();
-		followers = (List<String>)e.getProperty("followers");				
+		if (((List<String>)e.getProperty("followers")).contains(u.getEmail()) == false) {
 		
-		followers.add(u.getEmail());
+			List<String> followers = new ArrayList<>();
+			followers = (List<String>)e.getProperty("followers");				
+			
+			followers.add(u.getEmail());
+			
+			e.setProperty("followers", followers);
+					
+			Transaction txn = datastore.beginTransaction();
+			datastore.put(e);
+			txn.commit();
+			return e;
+		}
+		return null;
+
+	}
+	
+	@ApiMethod(name= "unfollowUser",path= "followUser", httpMethod = HttpMethod.POST)
+	public Entity stopFriend(User u,Friendship tu) throws UnauthorizedException, EntityNotFoundException {
+
+		if (u == null) {
+			throw new UnauthorizedException("Invalid credentials");
+		}
+
+	    Query searchQuery = new Query("tinyUser").setFilter(new FilterPredicate("email", FilterOperator.EQUAL, tu.getTargetUser()));
+	    
+	    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+	    
+	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
+
+		Entity e = preparedSearchQuery.asSingleEntity();
 		
-		e.setProperty("followers", followers);
-				
-		Transaction txn = datastore.beginTransaction();
-		datastore.put(e);
-		txn.commit();
-		return e;
+		if (((List<String>)e.getProperty("followers")).contains(u.getEmail()) == true) {
+		
+			List<String> followers = new ArrayList<>();
+			followers = (List<String>)e.getProperty("followers");				
+			
+			followers.remove(u.getEmail());
+			
+			e.setProperty("followers", followers);
+					
+			Transaction txn = datastore.beginTransaction();
+			datastore.put(e);
+			txn.commit();
+			return e;
+		}
+		return null;
 
 	}
 }

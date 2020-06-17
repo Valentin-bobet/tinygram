@@ -356,17 +356,15 @@ MyApp.SearchedUsersList = {
                                                     console.log("Followed");
                                                 })
                                             } else {
-                                                console.log("Unfollowed");
-                                                /** TO DO : UNFOLLOW
-                                                var data = {
-                                                        'askingUser': MyApp.Profile.email,
-                                                        'targetUser': tinyUser.email,
-                                                    };
                                                 return m.request ({
                                                     method: "POST",
-                                                    url: "_ah/api/myApi/v1/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),
+                                                    url: "_ah/api/user_api/v1/unfollowUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
                                                     params: data,
-                                                }) **/
+                                                }).then(function () {
+                                                    tinyUser.friend = false;
+                                                    document.getElementById("btn_follow").class = "btn-success";
+                                                    console.log("Unfollowed");
+                                                })
                                             }
 
                                         }

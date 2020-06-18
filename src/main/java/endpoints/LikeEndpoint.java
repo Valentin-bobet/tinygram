@@ -92,7 +92,7 @@ public class LikeEndpoint {
 			try {
 				Transaction postRemoveLikeTransaction = datastore.beginTransaction();
 				post = datastore.get(KeyFactory.createKey("Post", like.getPostLiked()));
-				post.setProperty("likes", (Long)post.getProperty("likes")-1);
+				if((Long)post.getProperty("likes")!=0) post.setProperty("likes", (Long)post.getProperty("likes")-1);
 				datastore.put(post);
 				postRemoveLikeTransaction.commit();
 				return post;

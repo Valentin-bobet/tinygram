@@ -337,7 +337,8 @@ MyApp.SearchedUsersList = {
             params: {
                 'email': email,
             },
-            url: "_ah/api/user_api/1.0/getUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),        })
+            url: "_ah/api/user_api/1.0/getUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+        })
         .then(function (response) {
             var tinyUser = response.properties;
             var friend = false;
@@ -1032,85 +1033,87 @@ MyApp.PostView = {
                         "style":"width:15vw"
                     }),
                 ]),
-                vnode.attrs.profile.userData.posts.map(function(item) {
-                    if (vnode.attrs.owned) {
-                        return m("tr", [
-                            m('td', {
-                                "style":"width:40vw"
-                            }, m('img', {
-                                    class:"profile_image",
-                                    'src': item.properties.url
-                                })
-                            ),
-                            m('td', {
-                                "style":"width:30vw"
-                            }, m('label', item.properties.body)
-                            ),
-                            m('td', {
-                                "style":"width:5vw"
-                            },
-                                m('label',
-                                    item.properties.likes
-                                )
-                            ),
-                            m("td", {
-                                "style":"width:10vw"
-                            },
-                                    m("button", {
-                                        "class":"btn btn-success",
-                                        onclick: function () {
-                                            MyApp.PostView.likePost(item.key.name);
-                                        },
+                (vnode.attrs.profile.userData.posts != undefined)?
+                    vnode.attrs.profile.userData.posts.map(function(item) {
+                        if (vnode.attrs.owned) {
+                            return m("tr", [
+                                m('td', {
+                                    "style":"width:40vw"
+                                }, m('img', {
+                                        class:"profile_image",
+                                        'src': item.properties.url
+                                    })
+                                ),
+                                m('td', {
+                                    "style":"width:30vw"
+                                }, m('label', item.properties.body)
+                                ),
+                                m('td', {
+                                    "style":"width:5vw"
                                 },
-                                "Like your own post (weird)")
-                            ),
-                            m("td", {
-                                "style":"width:10vw"
-                            },
-	                            m("button", {
-	                                  "class":"btn btn-danger",
-	                                  onclick: function() {
-                                          MyApp.PostView.deletePost(item);
-	                                   },
+                                    m('label',
+                                        item.properties.likes
+                                    )
+                                ),
+                                m("td", {
+                                    "style":"width:10vw"
+                                },
+                                        m("button", {
+                                            "class":"btn btn-success",
+                                            onclick: function () {
+                                                MyApp.PostView.likePost(item.key.name);
+                                            },
+                                    },
+                                    "Like your own post (weird)")
+                                ),
+                                m("td", {
+                                    "style":"width:10vw"
+                                },
+                                    m("button", {
+                                        "class":"btn btn-danger",
+                                        onclick: function() {
+                                            MyApp.PostView.deletePost(item);
+                                        },
 
-	                            	},
-	                            "Delete this post")
-                            )
-                        ]);
-                    } else {
-                        return m("tr", [
-                            m('td', {
-                                "style":"width:50vw"
-                            }, m('img', {
-                                    class:"profile_image",
-                                    'src': item.properties.url
-                                })
-                            ),
-                            m('td', {
-                                "style":"width:30vw"
-                            }, m('label', item.properties.body)
-                            ),
-                            m('td', {
-                                "style":"width:5vw"
-                            },
-                                m('label',
-                                    item.properties.likes
-                                )
-                            ),
-                            m("td", {
-                                "style":"width:15vw"
-                            },
-                                    m("button", {
-                                        "class":"btn btn-success float-right",
-                                        onclick: function () {
-                                            MyApp.PostView.likePost(item.key.name);
                                         },
+                                    "Delete this post")
+                                )
+                            ]);
+                        } else {
+                            return m("tr", [
+                                m('td', {
+                                    "style":"width:50vw"
+                                }, m('img', {
+                                        class:"profile_image",
+                                        'src': item.properties.url
+                                    })
+                                ),
+                                m('td', {
+                                    "style":"width:30vw"
+                                }, m('label', item.properties.body)
+                                ),
+                                m('td', {
+                                    "style":"width:5vw"
                                 },
-                                "Like this post")
-                            ),
-                        ]);
-                    }
-                })
+                                    m('label',
+                                        item.properties.likes
+                                    )
+                                ),
+                                m("td", {
+                                    "style":"width:15vw"
+                                },
+                                        m("button", {
+                                            "class":"btn btn-success float-right",
+                                            onclick: function () {
+                                                MyApp.PostView.likePost(item.key.name);
+                                            },
+                                    },
+                                    "Like this post")
+                                ),
+                            ]);
+                        }
+                    }):
+                m("div")
             ]),
             m('button',{
                 class: 'btn btn-info float-right mt-3',

@@ -111,9 +111,9 @@ public class UserEndpoint {
 
 	    PreparedQuery preparedSearchQuery = datastore.prepare(searchQuery);
 
-		List<Entity> searchQueryResult = preparedSearchQuery.asList(FetchOptions.Builder.withDefaults());
+		Entity searchQueryResult = preparedSearchQuery.asSingleEntity();
 
-		if(searchQueryResult.isEmpty()) {
+		if(searchQueryResult == null) {
 			Entity newTinyUser = new Entity("tinyUser");
 			newTinyUser.setProperty("email", tinyUser.email);
 			newTinyUser.setProperty("name", tinyUser.name);
@@ -131,7 +131,7 @@ public class UserEndpoint {
 			newTinyUserTransaction.commit();
 			return newTinyUser;
 		}
-		return null;
+		return searchQueryResult;
 	}
 
 	@ApiMethod(name= "followUser",path= "followUser", httpMethod = HttpMethod.POST)

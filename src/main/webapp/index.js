@@ -221,18 +221,25 @@ MyApp.Searchbar = {
 
             } else {
                 response.items.forEach(function (item) {
-                tinyUser=item.properties;
-                MyApp.SearchedUsersList.tinyUserList[i] = {
-                    email:tinyUser.email,
-                    name:tinyUser.name,
-                    invertedName:tinyUser.invertedName,
-                    firstName:tinyUser.firstName,
-                    lastName:tinyUser.lastName,
-                    url:tinyUser.url,
-                    friend:tinyUser.friend,
-                };
-                i++;
-            });
+                    var friend = false;
+                    item.properties.followers.forEach(function (follower) {
+                        if (follower == MyApp.Profile.userData.email) {
+                            friend = true;
+                        }
+                    });
+                    tinyUser=item.properties;
+                    MyApp.SearchedUsersList.tinyUserList[i] = {
+                        email:tinyUser.email,
+                        name:tinyUser.name,
+                        invertedName:tinyUser.invertedName,
+                        firstName:tinyUser.firstName,
+                        lastName:tinyUser.lastName,
+                        url:tinyUser.url,
+                        friend:friend,
+                    };
+                    i++;
+                });
+                console.log(MyApp.SearchedUsersList.tinyUserList);
             }
             m.route.set("/search");
         });
@@ -281,49 +288,10 @@ MyApp.SearchedUsersList = {
                                 return m("tr", {
                                     "style":"height:9vh"
                                 }, [
-//<<<<<<< HEAD
-//                                    m('h1', tinyUser.name),
-//                                    m('span', "("+tinyUser.email+")"),
-//                                ]),
-//                                m('td', {
-//                                    "style":"width:12vw"
-//                                }, m('button.btn.float-right', {
-//                                    class:tinyUser.followers.contains(MyApp.Profile.userData.email)?"btn-danger":"btn-success",
-//                            		id: "btn_follow",
-//                                    onclick: function (e) {
-//                                        e.preventDefault();
-//                                        if (!tinyUser.friend) {
-//                                            var data = {
-//                                                    'askingUser': MyApp.Profile.userData.email,
-//                                                    'targetUser': tinyUser.email,
-//                                                };
-//                                            console.log(MyApp.Profile.userData.email+' et '+tinyUser.email);
-//                                            return m.request ({
-//                                                method: "POST",
-//                                                url: "_ah/api/myApi/1.0/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),//                                                params: data,
-//                                            }).then(function () {
-//                                                tinyUser.friend = true;
-//                                                document.getElementById("btn_follow").class = "btn-danger";
-//                                                console.log("Followed");
-//                                            })
-//                                        } else {
-//                                            console.log("Unfollowed");
-//                                            /** TO DO : UNFOLLOW
-//                                            var data = {
-//                                                    'askingUser': MyApp.Profile.email,
-//                                                    'targetUser': tinyUser.email,
-//                                                };
-//                                            return m.request ({
-//                                                method: "POST",
-//                                                url: "_ah/api/myApi/1.0/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),//                                                params: data,
-//                                            }) **/
-//=======
                                     m('td', {
                                         "style":"width:10vw",
-                                        onclick: function (e) {
-                                            e.preventDefault();
+                                        onclick: function () {
                                             MyApp.SearchedUsersList.goToUser(tinyUser.email);
-//>>>>>>> 63432560beda2701366eb5591a16d9d59a77a4cc
                                         }
                                     },  m('img',
                                         {
@@ -335,8 +303,7 @@ MyApp.SearchedUsersList = {
                                     ),
                                     m('td.inline', {
                                         "style":"width:80vw",
-                                        onclick: function (e) {
-                                            e.preventDefault();
+                                        onclick: function () {
                                             MyApp.SearchedUsersList.goToUser(tinyUser.email);
                                         }
                                     }, [
@@ -348,31 +315,8 @@ MyApp.SearchedUsersList = {
                                     }, m('button.btn.float-right', {
                                         class:tinyUser.friend?"btn-danger":"btn-success",
                                         id: "btn_follow",
-                                        onclick: function (e) {
-                                            e.preventDefault();
-                                            var data = {
-                                                'askingUser': MyApp.Profile.userData.email,
-                                                'targetUser': tinyUser.email,
-                                            };
-                                            if (!tinyUser.friend) {
-                                                return m.request ({
-                                                    method: "POST",
-                                                    url: "_ah/api/user_api/1.0/followUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                    params: data,
-                                                }).then(function () {
-                                                    tinyUser.friend = true;
-                                                    document.getElementById("btn_follow").class = "btn-danger";
-                                                    console.log("Followed");
-                                                });
-                                            } else {
-                                                return m.request ({
-                                                    method: "POST",
-                                                    url: "_ah/api/user_api/1.0/unfollowUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                    params: data,
-                                                }).then(function () {
-                                                    tinyUser.friend = false;
-                                                    document.getElementById("btn_follow").class = "btn-success";
-                                                    console.log("Unfollowed");
-                                                });
-                                            }
+                                        onclick: function () {
+                                            MyApp.SearchedUsersList.followUser(tinyUser);
                                         }
                                     }, tinyUser.friend?"Followed":"Follow")
                                     )
@@ -395,8 +339,17 @@ MyApp.SearchedUsersList = {
             },
             url: "_ah/api/user_api/1.0/getUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),        })
         .then(function (response) {
-            console.log(response);
             var tinyUser = response.properties;
+            var friend = false;
+            var followers_count = -1;
+
+            tinyUser.followers.forEach(function (follower) {
+                followers_count++;
+                if (follower == MyApp.Profile.userData.email) {
+                    friend = true;
+                }
+            });
+
             MyApp.User.userData = {
                 email:tinyUser.email,
                 name:tinyUser.name,
@@ -404,11 +357,39 @@ MyApp.SearchedUsersList = {
                 firstName:tinyUser.firstName,
                 lastName:tinyUser.lastName,
                 url:tinyUser.url,
+                friend: friend,
+                followers_count: followers_count,
                 nextToken:"",
                 posts:[],
             };
+            MyApp.User.getPosts();
             m.route.set("/user");
         });
+    },
+    followUser: function (tinyUser) {
+        var data = {
+            'askingUser': MyApp.Profile.userData.email,
+            'targetUser': tinyUser.email,
+        };
+        if (!tinyUser.friend) {
+            return m.request ({
+                method: "POST",
+                url: "_ah/api/user_api/1.0/followUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                    params: data,
+            }).then(function () {
+                tinyUser.friend = true;
+                document.getElementById("btn_follow").class = "btn-danger";
+                console.log("Followed");
+            });
+        } else {
+            return m.request ({
+                method: "POST",
+                url: "_ah/api/user_api/1.0/unfollowUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                    params: data,
+            }).then(function () {
+                tinyUser.friend = false;
+                document.getElementById("btn_follow").class = "btn-success";
+                console.log("Unfollowed");
+            });
+        }
     }
 };
 
@@ -428,7 +409,7 @@ MyApp.User = {
                                 "alt":MyApp.User.userData.name+"'s profile picture"
                             })
                         ),
-                        m('div', {class:"col-md-4 col-sm-4 col-xs-4"},
+                        m('div', {class:"col-md-3 col-sm-3 col-xs-3"},
                             m("h1", {
                                 class: 'title'
                             }, MyApp.User.userData.name),
@@ -436,36 +417,15 @@ MyApp.User = {
                                 class: 'subtitle'
                             }, MyApp.User.userData.email)
                         ),
-
+                        m("div", {class:"col-md-3 col-sm-3 col-xs-3"},
+                            m("h2.subtitle", MyApp.User.userData.followers_count +" abonné(es)")
+                        ),
                         MyApp.Profile.userData.email != MyApp.User.userData.email?
                             m('div', {class:"col-md-4 col-sm-4 col-xs-4"},
-                                m("button.btn.float-left", {
+                                m("button.btn.float-right", {
                                     class: MyApp.User.userData.friend?"btn-danger":"btn-success",
-                                    onclick: function (e) {
-                                        e.preventDefault();
-                                        var data = {
-                                            'askingUser': MyApp.Profile.userData.email,
-                                            'targetUser': tinyUser.email,
-                                        };
-                                        if (!tinyUser.friend) {
-                                            return m.request ({
-                                                method: "POST",
-                                                url: "_ah/api/user_api/1.0/followUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                params: data,
-                                            }).then(function () {
-                                                tinyUser.friend = true;
-                                                document.getElementById("btn_follow").class = "btn-danger";
-                                                console.log("Followed");
-                                            });
-                                        } else {
-                                            return m.request ({
-                                                method: "POST",
-                                                url: "_ah/api/user_api/1.0/unfollowUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                params: data,
-                                            }).then(function () {
-                                                tinyUser.friend = false;
-                                                document.getElementById("btn_follow").class = "btn-success";
-                                                console.log("Unfollowed");
-                                            });
-                                        }
+                                    onclick: function () {
+                                        MyApp.User.followUser();
                                     }
                                 }, MyApp.User.userData.friend?"Unfollow":"Follow")
                             ):
@@ -473,20 +433,11 @@ MyApp.User = {
                                 m("span.btn.float-left", {
                                     class:"btn-outline-info",
                                     style:"cursor:inherit",
-                                    onclick: function (e) {
-                                        e.preventDefault();
+                                    onclick: function () {
                                         m.route.set("/profile");
                                     }
                                 }, "This is your public profile (click to access to your profile)")
-                            ),
-                        m('div', {class:"col-md-2 col-sm-2 col-xs-2"},
-                            m("button", {
-                                class:"btn btn-info float-right",
-                                onclick: function () {
-                                    MyApp.User.getPosts();
-                                },
-                            },"Load Messages")
-                        )]
+                            )]
                     ),
                     m("div",m(MyApp.PostView,{profile: MyApp.User, owned:false}))
                 ]),
@@ -534,6 +485,33 @@ MyApp.User = {
             }
         });
     },
+    followUser: function () {
+        var data = {
+            'askingUser': MyApp.Profile.userData.email,
+            'targetUser': MyApp.User.userData.email,
+        };
+        if (!MyApp.User.userData.friend) {
+            return m.request ({
+                method: "POST",
+                url: "_ah/api/user_api/1.0/followUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                params: data,
+            }).then(function () {
+                MyApp.User.userData.friend = true;
+                MyApp.User.userData.followers_count++;
+                m.redraw();
+                console.log("Followed");
+            });
+        } else {
+            return m.request ({
+                method: "POST",
+                url: "_ah/api/user_api/1.0/unfollowUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                params: data,
+            }).then(function () {
+                MyApp.User.userData.friend = false;
+                MyApp.User.userData.followers_count--;
+                m.redraw();
+                console.log("Unfollowed");
+            });
+        }
+    }
 };
 
 MyApp.Timeline = {
@@ -834,6 +812,7 @@ MyApp.Profile = {
         url: "",
         content:"",
         nextToken:"",
+        followers_count:0,
         posts:[],
     },
     view: function(){
@@ -847,13 +826,16 @@ MyApp.Profile = {
                             "src":MyApp.Profile.userData.url
                         })
                     ),
-                    m('div', {class:"col-md-8 col-sm-8 col-xs-8"},
+                    m('div', {class:"col-md-5 col-sm-5 col-xs-5"},
                         m("h1", {
                             class: 'title'
                         }, MyApp.Profile.userData.name),
                         m("h2", {
                             class: 'subtitle'
                         }, MyApp.Profile.userData.email)
+                    ),
+                    m("div", {class:"col-md-3 col-sm-3 col-xs-3"},
+                        m("h2.subtitle", MyApp.Profile.userData.followers_count +" abonné(es)")
                     ),
                     m('div', {class:"col-md-2 col-sm-2 col-xs-2"},
                         m("button", {
@@ -997,10 +979,12 @@ MyApp.Profile = {
             'url': MyApp.Profile.userData.url,
             'access_token': encodeURIComponent(MyApp.Profile.userData.id)
         };
-        return m.request ({
+        m.request ({
             method: "POST",
             url: "_ah/api/user_api/1.0/createUser",
             params: data,
+        }).then(function (response){
+            MyApp.Profile.userData.followers_count = response.properties.followers.length-1;
         });
     },
 };

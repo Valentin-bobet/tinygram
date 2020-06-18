@@ -47,17 +47,17 @@ import com.google.appengine.api.datastore.Transaction;
 public class PostEndpoint {
 
 	@ApiMethod(name = "getPost", path = "getPost", httpMethod=HttpMethod.GET)
-	public CollectionResponse<Entity> getPost(User user, @Nullable @Named("next") String cursorString)
+	public CollectionResponse<Entity> getPost(User user, @Nullable @Named("email") String email, @Nullable @Named("next") String cursorString)
 			throws UnauthorizedException {
 
 		if (user == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
 
-		Query q = new Query("Post").setFilter(new FilterPredicate("owner", FilterOperator.EQUAL, user.getEmail()));
+		Query postQuery = new Query("Post").setFilter(new FilterPredicate("owner", FilterOperator.EQUAL, email));
 
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		PreparedQuery pq = datastore.prepare(q);
+		PreparedQuery preparedPostQuery = datastore.prepare(postQuery);
 
 		FetchOptions fetchOptions = FetchOptions.Builder.withLimit(2);
 
@@ -65,14 +65,14 @@ public class PostEndpoint {
 			fetchOptions.startCursor(Cursor.fromWebSafeString(cursorString));
 		}
 
-		QueryResultList<Entity> results = pq.asQueryResultList(fetchOptions);
+		QueryResultList<Entity> results = preparedPostQuery.asQueryResultList(fetchOptions);
 		cursorString = results.getCursor().toWebSafeString();
 
 		return CollectionResponse.<Entity>builder().setItems(results).setNextPageToken(cursorString).build();
 	}
 
-	@ApiMethod(name = "postMsg", httpMethod = HttpMethod.POST)
-	public Entity postMsg(User user, Post post) throws UnauthorizedException {
+	@ApiMethod(name = "newPost", path="newPost", httpMethod = HttpMethod.POST)
+	public Entity newPost(User user, Post post) throws UnauthorizedException {
 
 		if (user == null) {
 			throw new UnauthorizedException("Invalid credentials");
@@ -95,15 +95,9 @@ public class PostEndpoint {
 		e.setProperty("date", new Date());
 		e.setProperty("receivers", receivers);
 
-///		Solution pour pas projeter les listes
-//		Entity pi = new Entity("PostIndex", e.getKey());
-//		HashSet<String> rec=new HashSet<String>();
-//		pi.setProperty("receivers",rec);
-
 		DatastoreService datastore_2 = DatastoreServiceFactory.getDatastoreService();
 		Transaction txn = datastore_2.beginTransaction();
 		datastore_2.put(e);
-//		datastore.put(pi);
 		txn.commit();
 		return e;
 	}
@@ -121,7 +115,7 @@ public class PostEndpoint {
 		PreparedQuery timelinePreparedQuery = datastore.prepare(timelineQuery);
 		FetchOptions fetchOptions = FetchOptions.Builder.withLimit(5);
 
-		if (cursorString != null) {
+		/*if (cursorString != null) {
             fetchOptions.startCursor(Cursor.fromWebSafeString(cursorString));
             QueryResultList<Entity> results = timelinePreparedQuery.asQueryResultList(fetchOptions);
             cursorString = results.getCursor().toWebSafeString();
@@ -129,7 +123,16 @@ public class PostEndpoint {
             return CollectionResponse.<Entity>builder().setItems(results).setNextPageToken(cursorString).build();
 		} else {
             return CollectionResponse.<Entity>builder().setItems(timelinePreparedQuery.asQueryResultList(fetchOptions)).build();
-        }
+		}*/
+
+		if (cursorString != null) {
+			fetchOptions.startCursor(Cursor.fromWebSafeString(cursorString));
+		}
+
+		QueryResultList<Entity> results = timelinePreparedQuery.asQueryResultList(fetchOptions);
+		cursorString = results.getCursor().toWebSafeString();
+
+		return CollectionResponse.<Entity>builder().setItems(results).setNextPageToken(cursorString).build();
 	}
 
 	@ApiMethod(name = "deletePost", path = "deletePost", httpMethod = HttpMethod.POST)

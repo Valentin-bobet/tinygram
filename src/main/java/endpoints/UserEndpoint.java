@@ -165,7 +165,6 @@ public class UserEndpoint {
 			return userQueryResult;
 		}
 		return null;
-
 	}
 
 	@ApiMethod(name= "unfollowUser",path= "unfollowUser", httpMethod = HttpMethod.POST)

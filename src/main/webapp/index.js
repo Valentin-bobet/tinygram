@@ -17,6 +17,7 @@ m.route(document.body, "/", {
             if (!auth2.isSignedIn.get()) m.route.set("/login");
             else {
                 MyApp.User.userData = {};
+                MyApp.Profile.getPosts();
                 return MyApp.Profile;
             }
         }
@@ -207,8 +208,10 @@ MyApp.Searchbar = {
             params: {
                 'email': MyApp.Profile.userData.email,
                 'search':$("#search").val(),
+                'access_token': encodeURIComponent(MyApp.Profile.userData.id)
             },
-            url: "_ah/api/user_api/1.0/getSearchUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),        })
+            url: "_ah/api/user_api/1.0/getSearchUser"
+        })
         .then(function(response) {
             console.log("users:",response);
             var i = 0;
@@ -402,7 +405,7 @@ MyApp.SearchedUsersList = {
                 lastName:tinyUser.lastName,
                 url:tinyUser.url,
                 nextToken:"",
-                postList:[],
+                posts:[],
             };
             m.route.set("/user");
         });
@@ -438,8 +441,7 @@ MyApp.User = {
                             m('div', {class:"col-md-4 col-sm-4 col-xs-4"},
                                 m("button.btn.float-left", {
                                     class: MyApp.User.userData.friend?"btn-danger":"btn-success",
-
-                                    onclick: function () {
+                                    onclick: function (e) {
                                         e.preventDefault();
                                         var data = {
                                             'askingUser': MyApp.Profile.userData.email,
@@ -464,23 +466,6 @@ MyApp.User = {
                                                 console.log("Unfollowed");
                                             });
                                         }
-/*
-                                        if(MyApp.User.userData.friend) {
-                                            console.log("Unfollowed");
-                                        } else {
-                                            console.log("Followed");
-                                            var data = {
-                                                    'askingUser': MyApp.Profile.userData.email,
-                                                    'targetUser': MyApp.User.userData.email,
-                                                };
-                                            return m.request ({
-                                                method: "POST",
-                                                url: "_ah/api/myApi/1.0/Friendship"+'?access_token='+encodeURIComponent(MyApp.Profile.id),                                                params: data,
-                                            }).then(function () {
-                                            	tinyUser.friend = true;
-                                                console.log("Followed");
-                                            })
-                                        }*/
                                     }
                                 }, MyApp.User.userData.friend?"Unfollow":"Follow")
                             ):
@@ -511,32 +496,39 @@ MyApp.User = {
     getPosts: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/post_api/1.0/getPost"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)        })
-        .then(function(result) {
-            console.log("load_list:",result);
-            MyApp.User.userData.postList=result.items;
-            if ('nextPageToken' in result) {
-                MyApp.User.userData.nextToken= result.nextPageToken;
+            url: "_ah/api/post_api/1.0/getPost",
+            params: {
+                'email':MyApp.User.userData.email,
+                'access_token':encodeURIComponent(MyApp.Profile.userData.id)
+            }
+        })
+        .then(function(response) {
+            console.log("load_list:",response);
+            MyApp.User.userData.posts=response.items;
+            if ('nextPageToken' in response) {
+                MyApp.User.userData.nextToken= response.nextPageToken;
             } else {
                 MyApp.User.userData.nextToken="";
             }
         });
     },
-    nextPost: function() {
+    getNextPosts: function() {
+        console.log(MyApp.Profile.userData.nextToken);
         return m.request({
             method: "GET",
-            url: "_ah/api/post_api/1.0/getPost",            params: {
+            url: "_ah/api/post_api/1.0/getPost",
+            params: {
+                'email':MyApp.User.userData.email,
                 'next':MyApp.User.userData.nextToken,
                 'access_token': encodeURIComponent(MyApp.Profile.userData.id)
             }
         })
-        .then(function(result) {
-            console.log("next:",result);
-            result.items.map( function(item) {
-                MyApp.User.userData.postList.push(item);
-            });
-            if ('nextPageToken' in result) {
-                MyApp.User.userData.nextToken= result.nextPageToken;
+        .then(function(response) {
+            if(response.items !=  undefined) {
+                MyApp.User.userData.posts = response.items;
+            }
+            if ('nextPageToken' in response) {
+                MyApp.User.userData.nextToken= response.nextPageToken;
             } else {
                 MyApp.User.userData.nextToken="";
             }
@@ -637,7 +629,13 @@ MyApp.Timeline = {
                                             )
                                         ]);
                                     })
-                                ])
+                                ]),
+                                m('button',{
+                                    class: 'btn btn-info float-right mt-3',
+                                    onclick: function(e) {
+                                        MyApp.Timeline.getNextPosts();
+                                    }
+                                }, "Next"),
 
                 ])
             ]);
@@ -647,7 +645,8 @@ MyApp.Timeline = {
         MyApp.Timeline.loading_gif = true;
         m.request({
             method: "GET",
-            url: "_ah/api/post_api/1.0/getTimeline"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)        })
+            url: "_ah/api/post_api/1.0/getTimeline"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)
+        })
         .then(function(response) {
             showTimeline = true;
             MyApp.Timeline.loading_gif = false;
@@ -667,6 +666,46 @@ MyApp.Timeline = {
                     };
                     i++;
                 });
+                if ('nextPageToken' in response) {
+                    MyApp.Profile.userData.nextToken = response.nextPageToken;
+                } else {
+                    MyApp.Profile.userData.nextToken="";
+                }
+            }
+        });
+    },
+    getNextPosts: function() {
+        console.log(MyApp.Profile.userData.nextToken);
+        return m.request({
+            method: "GET",
+            url: "_ah/api/post_api/1.0/getTimeline",
+            params: {
+                'next':MyApp.Profile.userData.nextToken,
+                'access_token': encodeURIComponent(MyApp.Profile.userData.id)
+            }
+        })
+        .then(function(response) {
+            showTimeline = true;
+            MyApp.Timeline.loading_gif = false;
+            var i = 0;
+            if (response.items != undefined) {
+                response.items.forEach( function (post) {
+                    MyApp.Timeline.posts[i] = {
+                        "key":post.key,
+                        "owner":post.properties.owner,
+                        "date":post.properties.date,
+                        "body":post.properties.body,
+                        "url":post.properties.url,
+                        "likes":post.properties.likes,
+                        "receivers":post.properties.receivers,
+                    };
+                    i++;
+                });
+                if ('nextPageToken' in response) {
+                    MyApp.Profile.userData.nextToken = response.nextPageToken;
+                } else {
+                    MyApp.Profile.nextToken="";
+                }
             }
         });
     },
@@ -679,7 +718,7 @@ MyApp.Timeline = {
 	 		method: "POST",
             url: "_ah/api/like_api/1.0/newLike"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
             params: data,
-		}).then(function(result){
+		}).then(function(response){
             console.log(postLiked+ "successfully liked");
             MyApp.Timeline.getTimeline();
             m.redraw();
@@ -702,7 +741,7 @@ MyApp.Timeline = {
                 lastName:tinyUser.lastName,
                 url:tinyUser.url,
                 nextToken:"",
-                postList:[],
+                posts:[],
             };
             m.route.set("/user");
         });
@@ -795,7 +834,7 @@ MyApp.Profile = {
         url: "",
         content:"",
         nextToken:"",
-        postList:[],
+        posts:[],
     },
     view: function(){
         return m('div',[
@@ -887,37 +926,41 @@ MyApp.Profile = {
     getPosts: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/post_api/1.0/getPost"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)        })
-        .then(function(result) {
-            console.log("load_list:",result);
-            MyApp.Profile.userData.postList=result.items;
-            if ('nextPageToken' in result) {
-                MyApp.Profile.userData.nextToken= result.nextPageToken;
+            url: "_ah/api/post_api/1.0/getPost",
+            params : {
+                'email':MyApp.Profile.userData.email,
+                'access_token': encodeURIComponent(MyApp.Profile.userData.id)
+            }
+        })
+        .then(function(response) {
+            console.log("load_list:",response);
+            MyApp.Profile.userData.posts=response.items;
+            if ('nextPageToken' in response) {
+                MyApp.Profile.userData.nextToken= response.nextPageToken;
             } else {
                 MyApp.Profile.userData.nextToken="";
             }
         });
     },
-    nextPost: function() {
+    getNextPosts: function() {
         return m.request({
             method: "GET",
-            url: "_ah/api/post_api/1.0/getPost",            params: {
+            url: "_ah/api/post_api/1.0/getPost",
+            params: {
+                'email':MyApp.User.userData.email,
                 'next':MyApp.Profile.userData.nextToken,
                 'access_token': encodeURIComponent(MyApp.Profile.userData.id)
             }
         })
-        .then(function(result) {
-            if(result.items === undefined) {
-                result.items.map(function(item) {
-                    MyApp.Profile.userData.postList.push(item);
-                });
-                if ('nextPageToken' in result) {
-                    MyApp.Profile.userData.nextToken= result.nextPageToken;
+        .then(function(response) {
+            if(response.items != undefined) {
+                MyApp.Profile.userData.posts = response.items;
+                if ('nextPageToken' in response) {
+                    MyApp.Profile.userData.nextToken = response.nextPageToken;
                 } else {
-                    MyApp.Profile.nextToken="";
+                    MyApp.Profile.nextToken = "";
                 }
             }
-
         });
     },
     newPost: function(url, body, random=true) {
@@ -925,20 +968,22 @@ MyApp.Profile = {
         if(random) {
             data= {
                 'url': "https://dummyimage.com/320x200/000/fff&text="+Date.now(),
-                'body': MyApp.Profile.userData.content
-            };
+                'body': "bla bla bla",
+                'access_token': encodeURIComponent(MyApp.Profile.userData.id)
+        };
         } else {
             data= {
                 'url': url,
-                'body': body
+                'body': body,
+                'access_token': encodeURIComponent(MyApp.Profile.userData.id)
             };
         }
         return m.request({
             method: "POST",
-            url: "_ah/api/post_api/1.0/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            url: "_ah/api/post_api/1.0/newPost",
             params: data,
         })
-        .then(function(result) {
+        .then(function(response) {
             MyApp.Profile.getPosts();
         });
     },
@@ -950,10 +995,11 @@ MyApp.Profile = {
             'name': MyApp.Profile.userData.name,
             'invertedName': MyApp.Profile.userData.lastName + " " + MyApp.Profile.userData.firstName,
             'url': MyApp.Profile.userData.url,
+            'access_token': encodeURIComponent(MyApp.Profile.userData.id)
         };
         return m.request ({
             method: "POST",
-            url: "_ah/api/user_api/1.0/createUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            url: "_ah/api/user_api/1.0/createUser",
             params: data,
         });
     },
@@ -1002,7 +1048,7 @@ MyApp.PostView = {
                         "style":"width:15vw"
                     }),
                 ]),
-                vnode.attrs.profile.userData.postList.map(function(item) {
+                vnode.attrs.profile.userData.posts.map(function(item) {
                     if (vnode.attrs.owned) {
                         return m("tr", [
                             m('td', {
@@ -1085,20 +1131,21 @@ MyApp.PostView = {
             m('button',{
                 class: 'btn btn-info float-right mt-3',
                 onclick: function(e) {
-                    vnode.attrs.profile.nextPost();
+                    vnode.attrs.profile.getNextPosts();
                 }
             }, "Next"),
         ]);
     },
     deletePost: function (post) {
         var data = {
-            'id': post.key.name
+            'id': post.key.name,
+            'access_token': encodeURIComponent(MyApp.Profile.userData.id)
         };
         m.request ({
             method: "POST",
-            url: "_ah/api/post_api/1.0/deletePost"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            url: "_ah/api/post_api/1.0/deletePost",
             params: data,
-        }).then(function(result) {
+        }).then(function(response) {
             console.log(post.key.name + " deleted");
             MyApp.Profile.getPosts();
             m.redraw();
@@ -1108,11 +1155,12 @@ MyApp.PostView = {
 	likePost: function(postLiked) {
 	    var data = {
             'postLiked': postLiked,
-            'mail': MyApp.Profile.userData.email
+            'email': MyApp.Profile.userData.email,
+            'access_token': encodeURIComponent(MyApp.Profile.userData.id)
         };
 	    m.request ({
 	 		method: "POST",
-            url: "_ah/api/like_api/1.0/newLike"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            url: "_ah/api/like_api/1.0/newLike",
             params: data,
 		}).then(function() {
             console.log(postLiked + " liked");

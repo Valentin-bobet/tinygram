@@ -1133,7 +1133,6 @@ MyApp.PostView = {
             url: "_ah/api/post_api/1.0/deletePost",
             params: data,
         }).then(function(response) {
-            console.log(post.key.name + " deleted");
             MyApp.Profile.getPosts();
             m.redraw();
         });
@@ -1150,8 +1149,7 @@ MyApp.PostView = {
             url: "_ah/api/like_api/1.0/newLike",
             params: data,
 		}).then(function() {
-            console.log(postLiked + " liked");
-            MyApp.Profile.getPosts();
+            MyApp.User.getPosts();
             m.redraw();
         });
 	}

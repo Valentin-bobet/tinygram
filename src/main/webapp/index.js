@@ -1,3 +1,5 @@
+/*jshint esversion: 6 */
+
 m.route(document.body, "/", {
     "/" : {
         onmatch: function() {
@@ -496,7 +498,7 @@ MyApp.User = {
                             m("button", {
                                 class:"btn btn-info float-right",
                                 onclick: function () {
-                                    MyApp.User.loadList();
+                                    MyApp.User.getPosts();
                                 },
                             },"Load Messages")
                         )]
@@ -506,7 +508,7 @@ MyApp.User = {
             ])
         );
     },
-    loadList: function() {
+    getPosts: function() {
         return m.request({
             method: "GET",
             url: "_ah/api/post_api/1.0/getPost"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)        })
@@ -520,7 +522,7 @@ MyApp.User = {
             }
         });
     },
-    next: function() {
+    nextPost: function() {
         return m.request({
             method: "GET",
             url: "_ah/api/post_api/1.0/getPost",            params: {
@@ -595,7 +597,7 @@ MyApp.Timeline = {
                                             m('td', {
                                                 "style":"width:20vw",
                                                 onclick: function () {
-                                                    MyApp.SearchedUsersList.goToUser(post.owner);
+                                                    MyApp.Timeline.goToUser(post.owner);
                                                 }
                                             }, [
                                                 /*m("h1", post.tinyUser.name),*/
@@ -628,7 +630,7 @@ MyApp.Timeline = {
                                                     m("button", {
                                                         "class":"btn btn-success",
                                                         onclick: function () {
-                                                            MyApp.Timeline.like(post.key.name);
+                                                            MyApp.Timeline.likePost(post.key.name);
                                                         },
                                                 },
                                                 "Like")
@@ -642,7 +644,6 @@ MyApp.Timeline = {
         }
     },
     getTimeline : function () {
-        console.log("Get timeline : start");
         MyApp.Timeline.loading_gif = true;
         m.request({
             method: "GET",
@@ -667,23 +668,44 @@ MyApp.Timeline = {
                     i++;
                 });
             }
-            console.log("Get timeline : done");
-            m.redraw();
         });
     },
-    like: function (postLiked) {
+    likePost: function (postLiked) {
 	    var data = {
             'postLiked': postLiked,
             'email': MyApp.Profile.userData.email
         };
         m.request ({
 	 		method: "POST",
-	 		url: "_ah/api/like_api/1.0/newLike"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),	 		params: data,
-		}).then(function () {
-            m.route.set("/home");
+            url: "_ah/api/like_api/1.0/newLike"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            params: data,
+		}).then(function(result){
+            console.log(postLiked+ "successfully liked");
+            MyApp.Timeline.getTimeline();
             m.redraw();
         });
-
+    },
+    goToUser: function (email) {
+        m.request({
+            method: "GET",
+            params: {
+                'email': email,
+            },
+            url: "_ah/api/user_api/1.0/getUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),        })
+        .then(function (response) {
+            var tinyUser = response.properties;
+            MyApp.User.userData = {
+                email:tinyUser.email,
+                name:tinyUser.name,
+                invertedName:tinyUser.invertedName,
+                firstName:tinyUser.firstName,
+                lastName:tinyUser.lastName,
+                url:tinyUser.url,
+                nextToken:"",
+                postList:[],
+            };
+            m.route.set("/user");
+        });
     }
 };
 
@@ -798,7 +820,7 @@ MyApp.Profile = {
                         m("button", {
                             class:"btn btn-info float-right",
                             onclick: function () {
-                                MyApp.Profile.loadList();
+                                MyApp.Profile.getPosts();
                             },
                         },"Load Messages")
                     )]
@@ -809,14 +831,14 @@ MyApp.Profile = {
                 m(".collapse[id='collapseNewPost'].mb-5", [
                     m("form", {
                         onsubmit: function(e) {
+                            e.preventDefault();
                             var post_url = "";
                             var post_body = "";
-                            e.preventDefault();
                             if ($("#new_post_url").val()=="") post_url="https://dummyimage.com/320x200/000/fff&text="+Date.now();
                             else post_url = $("#new_post_url").val();
                             if ($("#new_post_body").val()=="") post_body="bla bla bla \n"+Date.now();
                             else post_body = $("#new_post_body").val();
-                            MyApp.Profile.postMessage(post_url,post_body,false);
+                            MyApp.Profile.newPost(post_url,post_body,false);
                         }},
                         [
                             m('div', {
@@ -854,7 +876,7 @@ MyApp.Profile = {
                     m("button.mt-3", {
                         class:"btn btn-info float-right",
                         onclick: function () {
-                            MyApp.Profile.postMessage();
+                            MyApp.Profile.newPost();
                         },
                     },"Post Random Message"),
                 ]),
@@ -862,7 +884,7 @@ MyApp.Profile = {
             ])
         ]);
     },
-    loadList: function() {
+    getPosts: function() {
         return m.request({
             method: "GET",
             url: "_ah/api/post_api/1.0/getPost"+'?access_token=' + encodeURIComponent(MyApp.Profile.userData.id)        })
@@ -876,7 +898,7 @@ MyApp.Profile = {
             }
         });
     },
-    next: function() {
+    nextPost: function() {
         return m.request({
             method: "GET",
             url: "_ah/api/post_api/1.0/getPost",            params: {
@@ -885,18 +907,20 @@ MyApp.Profile = {
             }
         })
         .then(function(result) {
-            console.log("next:",result);
-            result.items.map( function(item) {
-                MyApp.Profile.userData.postList.push(item);
-            });
-            if ('nextPageToken' in result) {
-                MyApp.Profile.userData.nextToken= result.nextPageToken;
-            } else {
-                MyApp.Profile.nextToken="";
+            if(result.items === undefined) {
+                result.items.map(function(item) {
+                    MyApp.Profile.userData.postList.push(item);
+                });
+                if ('nextPageToken' in result) {
+                    MyApp.Profile.userData.nextToken= result.nextPageToken;
+                } else {
+                    MyApp.Profile.nextToken="";
+                }
             }
+
         });
     },
-    postMessage: function(url, body, random=true) {
+    newPost: function(url, body, random=true) {
         var data= {};
         if(random) {
             data= {
@@ -911,10 +935,11 @@ MyApp.Profile = {
         }
         return m.request({
             method: "POST",
-            url: "_ah/api/post_api/1.0/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),            params: data,
+            url: "_ah/api/post_api/1.0/postMsg"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            params: data,
         })
         .then(function(result) {
-            MyApp.Profile.loadList();
+            MyApp.Profile.getPosts();
         });
     },
     createUser: function() {
@@ -928,19 +953,10 @@ MyApp.Profile = {
         };
         return m.request ({
             method: "POST",
-            url: "_ah/api/user_api/1.0/createUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),            params: data,
+            url: "_ah/api/user_api/1.0/createUser"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            params: data,
         });
     },
-	likeIt: function(postLiked) {
-	    var data = {
-            'postLiked': postLiked,
-            'mail': MyApp.Profile.userData.email
-        };
-	    return m.request ({
-	 		method: "POST",
-	 		url: "_ah/api/like_api/1.0/newLike"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),	 		params: data,
-		});
-	}
 };
 
 MyApp.PostView = {
@@ -987,7 +1003,6 @@ MyApp.PostView = {
                     }),
                 ]),
                 vnode.attrs.profile.userData.postList.map(function(item) {
-                    console.log(item);
                     if (vnode.attrs.owned) {
                         return m("tr", [
                             m('td', {
@@ -1014,8 +1029,7 @@ MyApp.PostView = {
                                     m("button", {
                                         "class":"btn btn-success",
                                         onclick: function () {
-                                            MyApp.Profile.likeIt(item.key.name);
-                                            console.log("Like:"+item.key.id);
+                                            MyApp.PostView.likePost(item.key.name);
                                         },
                                 },
                                 "Like your own post (weird)")
@@ -1059,8 +1073,7 @@ MyApp.PostView = {
                                     m("button", {
                                         "class":"btn btn-success float-right",
                                         onclick: function () {
-                                            MyApp.Profile.likeIt(item.key.name);
-                                            console.log("like:"+item.key.id);
+                                            MyApp.PostView.likePost(item.key.name);
                                         },
                                 },
                                 "Like this post")
@@ -1072,7 +1085,7 @@ MyApp.PostView = {
             m('button',{
                 class: 'btn btn-info float-right mt-3',
                 onclick: function(e) {
-                    vnode.attrs.profile.next();
+                    vnode.attrs.profile.nextPost();
                 }
             }, "Next"),
         ]);
@@ -1081,15 +1094,32 @@ MyApp.PostView = {
         var data = {
             'id': post.key.name
         };
-        return m.request ({
+        m.request ({
             method: "POST",
-            url: "_ah/api/post_api/1.0/deletePost"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),                                                params: data,
+            url: "_ah/api/post_api/1.0/deletePost"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            params: data,
         }).then(function(result) {
+            console.log(post.key.name + " deleted");
+            MyApp.Profile.getPosts();
             m.redraw();
-            m.route.set("/profile");
         });
 
-    }
+    },
+	likePost: function(postLiked) {
+	    var data = {
+            'postLiked': postLiked,
+            'mail': MyApp.Profile.userData.email
+        };
+	    m.request ({
+	 		method: "POST",
+            url: "_ah/api/like_api/1.0/newLike"+'?access_token='+encodeURIComponent(MyApp.Profile.userData.id),
+            params: data,
+		}).then(function() {
+            console.log(postLiked + " liked");
+            MyApp.Profile.getPosts();
+            m.redraw();
+        });
+	}
 };
 
 MyApp.Login = {
@@ -1134,7 +1164,5 @@ MyApp.Admin = {
         } else {
             return lastNameArray[Math.floor(Math.random()*firstNameArray.length)];
         }
-     }
-
-
+    }
 };
